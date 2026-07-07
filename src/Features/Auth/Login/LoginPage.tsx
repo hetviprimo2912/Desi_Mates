@@ -83,16 +83,14 @@ const LoginPage = () => {
 
                         {/* Logo */}
 
-                        <div className="flex justify-center mb-4">
+                        {/* Logo */}
 
-                            <div className="w-16 h-16 rounded-2xl bg-[#2563EB] flex items-center justify-center shadow-lg">
-
-                                <span className="text-white text-3xl font-bold">
-                                    D
-                                </span>
-
-                            </div>
-
+                        <div className="flex justify-center mb-6">
+                            <img
+                                src="/logo/logo.png"
+                                alt="DesiMates"
+                                className="h-24 w-auto object-contain"
+                            />
                         </div>
 
                         {/* Heading */}

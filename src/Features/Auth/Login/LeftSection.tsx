@@ -34,24 +34,18 @@ const LeftSection = () => {
       <div className="z-10 max-w-md mx-auto w-full flex-1 flex flex-col pb-[35%]">
 
         {/* Logo */}
-        <div className="flex items-center gap-4 mb-10 mt-4">
+        <div className="mb-10 mt-4">
 
-          {/* Temporary Logo */}
-          <div className="w-14 h-14 rounded-2xl bg-[#2563EB] flex items-center justify-center shadow-lg">
-            <span className="text-white text-2xl font-bold">
-              D
-            </span>
-          </div>
+          <img
+            src="/logo/logo.png"
+            alt="DesiMates"
+            className="h-20 w-auto object-contain"
+          />
 
-          <div>
-            <h2 className="text-3xl font-extrabold text-gray-900">
-              DesiMates
-            </h2>
+          <p className="text-sm text-gray-500 mt-3 ml-1">
+            Admin Dashboard
+          </p>
 
-            <p className="text-sm text-gray-500">
-              Admin Dashboard
-            </p>
-          </div>
         </div>
 
         {/* Heading */}

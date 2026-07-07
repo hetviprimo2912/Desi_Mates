@@ -2,8 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import {
     ChevronDown,
     Download,
+    Users,
+    UserCheck,
+    Heart,
+    Crown,
 } from "lucide-react";
-
+import StatsCards from "../../Components/StatsCard";
 import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
@@ -11,91 +15,60 @@ import Tags from "../../Components/Tags";
 import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import axios from "../../lib/axiosConfiguration";
+import { useDispatch, useSelector } from "react-redux";
 
-interface User {
-    id: number;
-    profile: string;
-    userName: string;
-    email: string;
-    contact: string;
-    country: string;
-    receivedLikes: number;
-    sentLikes: number;
-    mode: string;
-    approved: boolean;
-}
 
-const initialUsers: User[] = [
+import { users_list } from "../../Store/slices/UsersSlice/users_list_thunk";
+
+import type { RootState, AppDispatch } from "../../Store/store";
+
+const stats = [
     {
-        id: 1,
-        profile: "https://i.pravatar.cc/150?img=1",
-        userName: "John Doe",
-        email: "john@gmail.com",
-        contact: "+91 9876543210",
-        country: "India",
-        receivedLikes: 52,
-        sentLikes: 33,
-        mode: "Premium",
-        approved: true,
+        label: "Total Users",
+        value: 1250,
+        icon: <Users size={24} className="text-blue-600" />,
+        bg: "bg-blue-50",
+        change: "+12.5% this month",
     },
     {
-        id: 2,
-        profile: "https://i.pravatar.cc/150?img=2",
-        userName: "Emma Watson",
-        email: "emma@gmail.com",
-        contact: "+44 7856321458",
-        country: "United Kingdom",
-        receivedLikes: 120,
-        sentLikes: 85,
-        mode: "Free",
-        approved: false,
+        label: "Approved Users",
+        value: 980,
+        icon: <UserCheck size={24} className="text-green-600" />,
+        bg: "bg-green-50",
+        change: "+8.2% this month",
     },
     {
-        id: 3,
-        profile: "https://i.pravatar.cc/150?img=3",
-        userName: "Rahul Sharma",
-        email: "rahul@gmail.com",
-        contact: "+91 9999999999",
-        country: "India",
-        receivedLikes: 65,
-        sentLikes: 48,
-        mode: "Premium",
-        approved: true,
+        label: "Subscribed Users",
+        value: 310,
+        icon: <Crown size={24} className="text-orange-600" />,
+        bg: "bg-orange-50",
+        change: "+15.4% this month",
     },
     {
-        id: 4,
-        profile: "https://i.pravatar.cc/150?img=4",
-        userName: "Sophia Brown",
-        email: "sophia@gmail.com",
-        contact: "+1 234567890",
-        country: "USA",
-        receivedLikes: 35,
-        sentLikes: 19,
-        mode: "Free",
-        approved: true,
-    },
-    {
-        id: 5,
-        profile: "https://i.pravatar.cc/150?img=5",
-        userName: "David Miller",
-        email: "david@gmail.com",
-        contact: "+61 456789123",
-        country: "Australia",
-        receivedLikes: 95,
-        sentLikes: 70,
-        mode: "Premium",
-        approved: false,
+        label: "Online Users",
+        value: 940,
+        icon: <Heart size={24} className="text-purple-600" />,
+        bg: "bg-purple-50",
+        change: "+4.3% this month",
     },
 ];
-
 export default function AllUsers() {
 
-    const [users, setUsers] =
-        useState<User[]>(initialUsers);
-
+    const dispatch = useDispatch<AppDispatch>();
+    const {
+        users,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.users_list
+    );
     const [searchTerm, setSearchTerm] =
         useState("");
-
+    const [debouncedSearch, setDebouncedSearch] =
+        useState("");
     const [rowsPerPage, setRowsPerPage] =
         useState(10);
 
@@ -112,28 +85,13 @@ export default function AllUsers() {
         useState(false);
 
     const [userToDelete, setUserToDelete] =
-        useState<User | null>(null);
+        useState<number | null>(null);
 
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-    const filteredUsers = users.filter(
-        (user) =>
-            user.userName
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            user.email
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-    );
-    const startIndex =
-        (currentPage - 1) * rowsPerPage;
 
-    const paginatedUsers =
-        filteredUsers.slice(
-            startIndex,
-            startIndex + rowsPerPage
-        );
+
     useEffect(() => {
 
         function handleClickOutside(
@@ -168,6 +126,27 @@ export default function AllUsers() {
         setCurrentPage(1);
 
     }, [searchTerm]);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 1000);
+
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+    useEffect(() => {
+        dispatch(
+            users_list({
+                search: debouncedSearch,
+                page_no: currentPage,
+                per_page: rowsPerPage,
+            })
+        );
+    }, [
+        dispatch,
+        debouncedSearch,
+        currentPage,
+        rowsPerPage,
+    ]);
     const handleSelectAll = (
         checked: boolean
     ) => {
@@ -176,7 +155,7 @@ export default function AllUsers() {
 
             setSelectedUsers(
                 new Set(
-                    paginatedUsers.map((_, index) => index)
+                    users.map((_, index) => index)
                 )
             );
 
@@ -213,43 +192,21 @@ export default function AllUsers() {
     };
 
     const isAllSelected =
-        paginatedUsers.length > 0 &&
-        filteredUsers.every((_, index) =>
+        users.length > 0 &&
+        users.every((_, index) =>
             selectedUsers.has(index)
         );
 
     const isIndeterminate =
-        paginatedUsers.some((_, index) =>
+        users.some((_, index) =>
             selectedUsers.has(index)
         ) && !isAllSelected;
 
-    const handleToggleApproval = (
-        id: number
-    ) => {
-
-        setUsers(prev =>
-            prev.map(user =>
-                user.id === id
-                    ? {
-                        ...user,
-                        approved: !user.approved,
-                    }
-                    : user
-            )
-        );
-
-    };
 
     const handleDelete = () => {
 
         if (!userToDelete) return;
 
-        setUsers(prev =>
-            prev.filter(
-                user =>
-                    user.id !== userToDelete.id
-            )
-        );
 
         setSelectedUsers(new Set());
 
@@ -258,7 +215,168 @@ export default function AllUsers() {
         setIsDeleteModalOpen(false);
 
     };
+    const formatDate = (date: string) =>
+        new Date(date).toLocaleDateString("en-US", {
+            month: "short",
+            day: "2-digit",
+            year: "numeric",
+        });
 
+    const formatTime = (date: string) =>
+        new Date(date).toLocaleTimeString("en-US", {
+            hour: "numeric",
+            minute: "2-digit",
+        });
+    const getInitials = (name?: string | null) => {
+        if (!name) return "N/A";
+
+        const words = name.trim().split(" ");
+
+        if (words.length === 1) {
+            return words[0].charAt(0).toUpperCase();
+        }
+
+        return (
+            words[0].charAt(0) +
+            words[words.length - 1].charAt(0)
+        ).toUpperCase();
+    };
+    const fetchAllUsers = async () => {
+        const response = await axios.post("/users_list", {
+            search: debouncedSearch,
+            page_no: 1,
+            per_page: pagination?.total ?? users.length,
+        });
+
+        return response.data.data.users;
+    };
+    const handleExportPDF = async () => {
+        const allUsers = await fetchAllUsers();
+
+        const doc = new jsPDF("landscape");
+
+        doc.setFontSize(18);
+        doc.text("All Users Report", 14, 18);
+
+        doc.setFontSize(10);
+        doc.text(
+            `Generated : ${new Date().toLocaleString()}`,
+            14,
+            26
+        );
+
+        autoTable(doc, {
+            startY: 34,
+
+            head: [[
+                "Name",
+                "Email",
+                "Phone",
+                "Country",
+                "Looking For",
+                "Created At",
+                "Approved",
+            ]],
+
+            body: allUsers.map((user: any) => [
+
+                user.name ?? "N/A",
+
+                user.email ?? "N/A",
+
+                user.phone ?? "N/A",
+
+                user.country ?? "N/A",
+
+                user.lookinfor ?? "N/A",
+
+                user.created_at
+                    ? new Date(user.created_at).toLocaleString()
+                    : "N/A",
+
+                user.approved === 1
+                    ? "Approved"
+                    : "Not Approved",
+
+            ]),
+
+            headStyles: {
+                fillColor: [37, 99, 235],
+            },
+
+            styles: {
+                fontSize: 9,
+                cellPadding: 3,
+            },
+        });
+
+        doc.save("All_Users_Report.pdf");
+    };
+    const handleExportCSV = async () => {
+
+        const allUsers = await fetchAllUsers();
+
+        const headers = [
+            "Name",
+            "Email",
+            "Phone",
+            "Country",
+            "Looking For",
+            "Created At",
+            "Approved",
+        ];
+
+        const rows = allUsers.map((user: any) => [
+
+            user.name ?? "N/A",
+
+            user.email ?? "N/A",
+
+            user.phone ?? "N/A",
+
+            user.country ?? "N/A",
+
+            user.lookinfor ?? "N/A",
+
+            user.created_at
+                ? new Date(user.created_at).toLocaleString()
+                : "N/A",
+
+            user.approved === 1
+                ? "Approved"
+                : "Not Approved",
+
+        ]);
+
+        const csvContent = [headers, ...rows]
+            .map((row) =>
+                row
+                    .map((value) =>
+                        `"${String(value).replace(/"/g, '""')}"`
+                    )
+                    .join(",")
+            )
+            .join("\n");
+
+        const blob = new Blob(
+            [csvContent],
+            {
+                type: "text/csv;charset=utf-8;",
+            }
+        );
+
+        const url = window.URL.createObjectURL(blob);
+
+        const link = document.createElement("a");
+
+        link.href = url;
+
+        link.download = "All_Users_Report.csv";
+
+        link.click();
+
+        window.URL.revokeObjectURL(url);
+    };
     return (
 
         <div className="w-full min-h-screen text-[#111827]">
@@ -282,8 +400,7 @@ export default function AllUsers() {
 
                 <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6 mb-8">
 
-                    <div>
-
+                    <div className="overflow-x-auto scrollbar-thin">
                         <h1 className="text-[28px] font-semibold text-[#101828]">
 
                             All Users
@@ -340,17 +457,22 @@ export default function AllUsers() {
 
                                     <button
                                         onClick={() => {
-
-                                            console.table(filteredUsers);
-
+                                            handleExportPDF();
                                             setIsExportOpen(false);
-
                                         }}
                                         className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                                     >
-
                                         Export as PDF
+                                    </button>
 
+                                    <button
+                                        onClick={() => {
+                                            handleExportCSV();
+                                            setIsExportOpen(false);
+                                        }}
+                                        className="w-full border-t border-gray-100 px-4 py-3 text-left text-sm hover:bg-gray-50"
+                                    >
+                                        Export as CSV
                                     </button>
 
                                 </div>
@@ -362,12 +484,51 @@ export default function AllUsers() {
                     </div>
 
                 </div>
+                {loading ? (
 
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+
+                        {[...Array(4)].map((_, index) => (
+
+                            <div
+                                key={index}
+                                className="bg-white border border-gray-200 rounded-xl p-6"
+                            >
+
+                                <div className="flex items-center gap-4">
+
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+
+                                    <div className="flex-1">
+
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        ))}
+
+                    </div>
+
+                ) : (
+
+                    <StatsCards
+                        stats={stats}
+                        cols={4}
+                    />
+
+                )}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
+                    <div className="w-full overflow-x-auto">
 
-                    <div className="overflow-x-auto">
-
-                        <table className="w-full min-w-[1500px] border-collapse">
+                        <table className="w-full min-w-[1200px] border-collapse">
 
                             <TableHeader
                                 columns={[
@@ -392,16 +553,12 @@ export default function AllUsers() {
                                         width: "140px",
                                     },
                                     {
-                                        label: "Total Received Like",
-                                        width: "180px",
-                                    },
-                                    {
-                                        label: "Total Sent Like",
+                                        label: "Looking For",
                                         width: "170px",
                                     },
                                     {
-                                        label: "Mode",
-                                        width: "130px",
+                                        label: "Created At",
+                                        width: "180px",
                                     },
                                     {
                                         label: "Approved",
@@ -420,213 +577,270 @@ export default function AllUsers() {
                             />
 
                             <tbody className="divide-y divide-gray-100">
-                            {paginatedUsers.map((user, idx) => (
 
-                                <tr
-                                    key={user.id}
-                                    className="hover:bg-gray-50 transition-colors"
-                                >
+                                {loading ? (
 
-                                    {/* Checkbox */}
+                                    [...Array(rowsPerPage)].map((_, index) => (
 
-                                    <td className="px-4 py-4">
+                                        <tr key={index} className="animate-pulse">
 
-                                        <input
-                                            type="checkbox"
-                                            checked={selectedUsers.has(idx)}
-                                            onChange={(e) =>
-                                                handleSelectUser(
-                                                    idx,
-                                                    e.target.checked
-                                                )
-                                            }
-                                            className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
-                                        />
+                                            <td className="px-4 py-5">
+                                                <div className="h-4 w-4 rounded bg-gray-200" />
+                                            </td>
 
-                                    </td>
+                                            <td className="px-4 py-5">
+                                                <div className="w-11 h-11 rounded-full bg-gray-200" />
+                                            </td>
 
-                                    {/* Profile */}
+                                            <td className="px-4 py-5">
+                                                <div className="h-4 w-32 rounded bg-gray-200" />
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            <td className="px-4 py-5">
+                                                <div className="h-4 w-44 rounded bg-gray-200" />
+                                            </td>
 
-                                        <img
-                                            src={user.profile}
-                                            alt={user.userName}
-                                            className="w-11 h-11 rounded-full object-cover border border-gray-200 shadow-sm"
-                                        />
+                                            <td className="px-4 py-5">
+                                                <div className="h-4 w-32 rounded bg-gray-200" />
+                                            </td>
 
-                                    </td>
+                                            <td className="px-4 py-5">
+                                                <div className="h-4 w-24 rounded bg-gray-200" />
+                                            </td>
 
-                                    {/* Username */}
+                                            <td className="px-4 py-5">
+                                                <div className="h-6 w-20 rounded-full bg-gray-200" />
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            <td className="px-4 py-5">
+                                                <div className="h-4 w-28 rounded bg-gray-200 mb-2" />
+                                                <div className="h-3 w-20 rounded bg-gray-100" />
+                                            </td>
 
-                                        <p className="text-[15px] font-medium text-[#111827]">
-                                            {user.userName}
-                                        </p>
+                                            <td className="px-4 py-5">
+                                                <div className="h-6 w-24 rounded-full bg-gray-200" />
+                                            </td>
 
-                                    </td>
+                                            <td className="px-4 py-5">
+                                                <div className="h-8 w-8 rounded bg-gray-200" />
+                                            </td>
 
-                                    {/* Email */}
+                                        </tr>
 
-                                    <td className="px-4 py-5">
+                                    ))
 
-                                        <p className="text-[14px] text-gray-600">
-                                            {user.email}
-                                        </p>
+                                ) : users.length > 0 ? (
 
-                                    </td>
+                                    users.map((user, idx) => (
 
-                                    {/* Contact */}
+                                        <tr
+                                            key={user.id}
+                                            className="hover:bg-gray-50 transition-colors"
+                                        >
 
-                                    <td className="px-4 py-5">
+                                            {/* Checkbox */}
 
-                                        <p className="text-[14px] text-gray-600">
-                                            {user.contact}
-                                        </p>
+                                            <td className="px-4 py-4">
 
-                                    </td>
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedUsers.has(idx)}
+                                                    onChange={(e) =>
+                                                        handleSelectUser(
+                                                            idx,
+                                                            e.target.checked
+                                                        )
+                                                    }
+                                                    className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
+                                                />
 
-                                    {/* Country */}
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            {/* Profile */}
 
-                                        <p className="text-[14px] text-gray-700">
-                                            {user.country}
-                                        </p>
+                                            <td className="px-4 py-5 whitespace-nowrap">
 
-                                    </td>
+                                                <div
+                                                    className="
+                                                            w-11
+                                                            h-11
+                                                            rounded-full
+                                                            bg-blue-100
+                                                            text-blue-700
+                                                            flex
+                                                            items-center
+                                                            justify-center
+                                                            font-semibold
+                                                            text-sm
+                                                            border
+                                                            border-gray-200
+                                                        "
+                                                >
+                                                    {getInitials(user.name)}
+                                                </div>
 
-                                    {/* Total Received Likes */}
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            {/* Username */}
 
-                                        <span className="text-[14px] font-medium text-[#111827]">
-                                            {user.receivedLikes}
-                                        </span>
+                                            <td className="pl-16 px-4 py-5 whitespace-nowrap">
 
-                                    </td>
+                                                <p className="text-[15px] font-medium text-[#111827]">
+                                                    {user.name ?? "N/A"}
+                                                </p>
 
-                                    {/* Total Sent Likes */}
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            {/* Email */}
 
-                                        <span className="text-[14px] font-medium text-[#111827]">
-                                            {user.sentLikes}
-                                        </span>
+                                            <td className="pl-20 px-4 py-5 whitespace-nowrap">
 
-                                    </td>
+                                                <p className="text-[14px] text-gray-600">
+                                                    {user.email ?? "N/A"}
+                                                </p>
 
-                                    {/* Mode */}
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            {/* Contact */}
 
-                                        <Tags
-                                            text={user.mode}
-                                            variant={
-                                                user.mode === "Premium"
-                                                    ? "green"
-                                                    : "gray"
-                                            }
-                                        />
+                                            <td className="pl-10 px-4 py-5 whitespace-nowrap">
 
-                                    </td>
+                                                <p className="text-[14px] text-gray-600">
+                                                    {user.phone ?? "N/A"}
+                                                </p>
 
-                                    {/* Approved */}
+                                            </td>
 
-                                    <td className="px-4 py-5">
+                                            {/* Country */}
 
-                                        <TogglableSwitch
-                                            isActive={user.approved}
-                                            onToggle={() =>
-                                                handleToggleApproval(user.id)
-                                            }
-                                            activeLabel="Yes"
-                                            inactiveLabel="No"
-                                        />
+                                            <td className="pl-16 px-4 py-5 whitespace-nowrap">
 
-                                    </td>
+                                                <p className="text-[14px] text-gray-700">
+                                                    {user.country ?? "N/A"}
+                                                </p>
 
-                                    {/* Action */}
+                                            </td>
+                                            {/* Looking For */}
+                                            <td className="pl-14 px-4 py-5 whitespace-nowrap">
 
-                                    <td className="px-4 py-5">
+                                                <span className="text-pink-400 font-bold">
+                                                    {user.lookinfor ?? "N/A"}
+                                                </span>
 
-                                        <Action
-                                            showView={true}
-                                            showEdit={false}
-                                            showDelete={true}
-                                            onView={() =>
-                                                console.log(
-                                                    "View User",
-                                                    user
-                                                )
-                                            }
-                                            onDelete={() => {
+                                            </td>
+                                            {/* Created At */}
 
-                                                setUserToDelete(user);
+                                            <td className="pl-14 px-4 py-5 whitespace-nowrap">
 
-                                                setIsDeleteModalOpen(true);
+                                                <div className="flex flex-col">
 
-                                            }}
-                                        />
+                                                    <span className="text-[15px] font-medium text-[#111827]">
+                                                        {user.created_at ? formatDate(user.created_at) : "N/A"}
+                                                    </span>
 
-                                    </td>
+                                                    <span className="text-[14px] text-gray-500 mt-1">
+                                                        {user.created_at ? formatTime(user.created_at) : "N/A"}
+                                                    </span>
 
-                                </tr>
+                                                </div>
 
-                            ))}
+                                            </td>
 
-                            {filteredUsers.length === 0 && (
+                                            {/* Approved */}
 
-                                <tr>
+                                            <td className="pl-10 px-4 py-5 whitespace-nowrap">
 
-                                    <td
-                                        colSpan={11}
-                                        className="py-10 text-center text-gray-400 italic"
-                                    >
+                                                <Tags
+                                                    text={
+                                                        user.approved === 1
+                                                            ? "Approved"
+                                                            : user.approved === 0
+                                                                ? "Not Approved"
+                                                                : "N/A"
+                                                    }
+                                                    variant={
+                                                        user.approved === 1
+                                                            ? "green"
+                                                            : user.approved === 0
+                                                                ? "red"
+                                                                : "gray"
+                                                    }
+                                                />
 
-                                        No users found.
+                                            </td>
 
-                                    </td>
+                                            {/* Action */}
 
-                                </tr>
+                                            <td className="px-4 py-5 whitespace-nowrap">
 
-                            )}
+                                                <Action
+                                                    showView={true}
+                                                    showEdit={false}
+                                                    showDelete={true}
+                                                    onView={() =>
+                                                        console.log(
+                                                            "View User",
+                                                            user
+                                                        )
+                                                    }
+                                                    onDelete={() => {
 
-                        </tbody>
+                                                        setUserToDelete(user.id);
+
+                                                        setIsDeleteModalOpen(true);
+
+                                                    }}
+                                                />
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))) : (
+
+                                    <tr>
+
+                                        <td
+                                            colSpan={11}
+                                            className="py-10 text-center text-gray-400 italic"
+                                        >
+
+                                            No users found.
+
+                                        </td>
+
+                                    </tr>
+
+                                )}
+
+                            </tbody>
                         </table>
                     </div>
                 </div>
 
-            {/* Pagination */}
+                {/* Pagination */}
 
-            <Pagination
-                currentPage={currentPage}
-                totalPages={Math.max(
-                    1,
-                    Math.ceil(
-                        filteredUsers.length /
-                        rowsPerPage
-                    )
-                )}
-                rowsPerPage={rowsPerPage}
-                onPageChange={(page) =>
-                    setCurrentPage(page)
-                }
-                onRowsPerPageChange={(rows) => {
-                    setRowsPerPage(rows);
-                    setCurrentPage(1);
-                }}
-                rowsPerPageOptions={[
-                    5,
-                    10,
-                    20,
-                    50,
-                ]}
-                showRowsPerPage={true}
-                showPageInfo={true}
-                className="mt-6"
-            />
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={pagination?.last_page ?? 1}
+                    rowsPerPage={rowsPerPage}
+                    onPageChange={(page) =>
+                        setCurrentPage(page)
+                    }
+                    onRowsPerPageChange={(rows) => {
+                        setRowsPerPage(rows);
+                        setCurrentPage(1);
+                    }}
+                    rowsPerPageOptions={[
+                        5,
+                        10,
+                        20,
+                        50,
+                    ]}
+                    showRowsPerPage={true}
+                    showPageInfo={true}
+                    className="mt-6"
+                />
 
             </div>
 

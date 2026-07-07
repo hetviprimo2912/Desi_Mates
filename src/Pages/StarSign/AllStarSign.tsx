@@ -3,11 +3,13 @@ import {
     ChevronDown,
     Download,
     Users,
-    UserCheck,
+    Star,
     Heart,
-    Crown,
+    TrendingUp,
+    ArrowDownCircle,
+    Sparkles,
 } from "lucide-react";
-import StatsCards from "../../Components/StatsCard";
+import StatsCard from "../../Components/StatsCard";
 import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
@@ -16,110 +18,128 @@ import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 
-interface User {
+interface StarSign {
     id: number;
-    profile: string;
-    userName: string;
-    email: string;
-    contact: string;
-    country: string;
-
-    mode: string;
-    approved: boolean;
+    symbol: string;
+    name: string;
+    description: string;
 }
 
-const initialUsers: User[] = [
+interface StarSign {
+    id: number;
+    symbol: string;
+    name: string;
+    description: string;
+}
+
+const initialStarSigns: StarSign[] = [
     {
         id: 1,
-        profile: "https://i.pravatar.cc/150?img=1",
-        userName: "John Doe",
-        email: "john@gmail.com",
-        contact: "+91 9876543210",
-        country: "India",
-
-        mode: "Premium",
-        approved: true,
+        symbol: "♈",
+        name: "Aries",
+        description: "Confident, courageous and energetic."
     },
     {
         id: 2,
-        profile: "https://i.pravatar.cc/150?img=2",
-        userName: "Emma Watson",
-        email: "emma@gmail.com",
-        contact: "+44 7856321458",
-        country: "United Kingdom",
-
-        mode: "Free",
-        approved: false,
+        symbol: "♉",
+        name: "Taurus",
+        description: "Reliable, patient and practical."
     },
     {
         id: 3,
-        profile: "https://i.pravatar.cc/150?img=3",
-        userName: "Rahul Sharma",
-        email: "rahul@gmail.com",
-        contact: "+91 9999999999",
-        country: "India",
-
-        mode: "Premium",
-        approved: true,
+        symbol: "♊",
+        name: "Gemini",
+        description: "Curious, adaptable and expressive."
     },
     {
         id: 4,
-        profile: "https://i.pravatar.cc/150?img=4",
-        userName: "Sophia Brown",
-        email: "sophia@gmail.com",
-        contact: "+1 234567890",
-        country: "USA",
-
-        mode: "Free",
-        approved: true,
+        symbol: "♋",
+        name: "Cancer",
+        description: "Emotional, caring and protective."
     },
     {
         id: 5,
-        profile: "https://i.pravatar.cc/150?img=5",
-        userName: "David Miller",
-        email: "david@gmail.com",
-        contact: "+61 456789123",
-        country: "Australia",
-
-        mode: "Premium",
-        approved: false,
+        symbol: "♌",
+        name: "Leo",
+        description: "Confident, generous and natural leader."
+    },
+    {
+        id: 6,
+        symbol: "♍",
+        name: "Virgo",
+        description: "Practical, analytical and detail-oriented."
+    },
+    {
+        id: 7,
+        symbol: "♎",
+        name: "Libra",
+        description: "Balanced, diplomatic and charming."
+    },
+    {
+        id: 8,
+        symbol: "♏",
+        name: "Scorpio",
+        description: "Passionate, determined and loyal."
+    },
+    {
+        id: 9,
+        symbol: "♐",
+        name: "Sagittarius",
+        description: "Optimistic, adventurous and independent."
+    },
+    {
+        id: 10,
+        symbol: "♑",
+        name: "Capricorn",
+        description: "Disciplined, ambitious and responsible."
+    },
+    {
+        id: 11,
+        symbol: "♒",
+        name: "Aquarius",
+        description: "Innovative, independent and visionary."
+    },
+    {
+        id: 12,
+        symbol: "♓",
+        name: "Pisces",
+        description: "Compassionate, intuitive and artistic."
     },
 ];
-const stats = [
+const starSignStats = [
     {
-        label: "Total Subscribers",
-        value: 540,
+        label: "Total Star Signs",
+        value: "12",
+        sub: "Available zodiac signs",
+        icon: <Sparkles size={24} className="text-violet-600" />,
+        bg: "bg-violet-50",
+    },
+    {
+        label: "Profiles With Star Sign",
+        value: "18,240",
+        sub: "Users who selected a star sign",
         icon: <Users size={24} className="text-blue-600" />,
         bg: "bg-blue-50",
-        change: "+10.4% this month",
     },
     {
-        label: "Active Subscribers",
-        value: 495,
-        icon: <UserCheck size={24} className="text-green-600" />,
-        bg: "bg-green-50",
-        change: "+6.8% this month",
+        label: "Most Popular Sign",
+        value: "Leo",
+        sub: "Chosen by 2,846 profiles",
+        icon: <Star size={24} className="text-yellow-600" />,
+        bg: "bg-yellow-50",
     },
     {
-        label: "Premium Plans",
-        value: 310,
-        icon: <Crown size={24} className="text-orange-600" />,
-        bg: "bg-orange-50",
-        change: "+15.4% this month",
-    },
-    {
-        label: "Expired Plans",
-        value: 45,
-        icon: <Heart size={24} className="text-red-500" />,
+        label: "Least Popular Sign",
+        value: "Capricorn",
+        sub: "Chosen by 632 profiles",
+        icon: <ArrowDownCircle size={24} className="text-red-600" />,
         bg: "bg-red-50",
-        change: "-3.2% this month",
-        isNegative: true,
     },
 ];
-export default function SubscribedUsers() {
+export default function AllUsers() {
 
-    const [users, setUsers] =
-        useState<User[]>(initialUsers);
+    const [starSigns, setStarSigns] =
+        useState<StarSign[]>(initialStarSigns);
 
     const [searchTerm, setSearchTerm] =
         useState("");
@@ -130,7 +150,7 @@ export default function SubscribedUsers() {
     const [currentPage, setCurrentPage] =
         useState(1);
 
-    const [selectedUsers, setSelectedUsers] =
+    const [selectedstarSigns, setSelectedstarSigns] =
         useState<Set<number>>(new Set());
 
     const [isExportOpen, setIsExportOpen] =
@@ -139,26 +159,23 @@ export default function SubscribedUsers() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] =
         useState(false);
 
-    const [userToDelete, setUserToDelete] =
-        useState<User | null>(null);
+    const [categoryToDelete, setCategoryToDelete] =
+        useState<StarSign | null>(null);
 
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-    const filteredUsers = users.filter(
-        (user) =>
-            user.userName
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            user.email
+    const filteredstarSigns =
+        starSigns.filter(category =>
+            category.name
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
-    );
+        );
     const startIndex =
         (currentPage - 1) * rowsPerPage;
 
-    const paginatedUsers =
-        filteredUsers.slice(
+    const paginatedstarSigns =
+        filteredstarSigns.slice(
             startIndex,
             startIndex + rowsPerPage
         );
@@ -202,15 +219,15 @@ export default function SubscribedUsers() {
 
         if (checked) {
 
-            setSelectedUsers(
+            setSelectedstarSigns(
                 new Set(
-                    paginatedUsers.map((_, index) => index)
+                    paginatedstarSigns.map((_, index) => index)
                 )
             );
 
         } else {
 
-            setSelectedUsers(
+            setSelectedstarSigns(
                 new Set()
             );
 
@@ -224,7 +241,7 @@ export default function SubscribedUsers() {
     ) => {
 
         const updated =
-            new Set(selectedUsers);
+            new Set(selectedstarSigns);
 
         if (checked) {
 
@@ -236,57 +253,39 @@ export default function SubscribedUsers() {
 
         }
 
-        setSelectedUsers(updated);
+        setSelectedstarSigns(updated);
 
     };
 
     const isAllSelected =
-        paginatedUsers.length > 0 &&
-        filteredUsers.every((_, index) =>
-            selectedUsers.has(index)
+        paginatedstarSigns.length > 0 &&
+        filteredstarSigns.every((_, index) =>
+            selectedstarSigns.has(index)
         );
 
     const isIndeterminate =
-        paginatedUsers.some((_, index) =>
-            selectedUsers.has(index)
+        paginatedstarSigns.some((_, index) =>
+            selectedstarSigns.has(index)
         ) && !isAllSelected;
-
-    const handleToggleApproval = (
-        id: number
-    ) => {
-
-        setUsers(prev =>
-            prev.map(user =>
-                user.id === id
-                    ? {
-                        ...user,
-                        approved: !user.approved,
-                    }
-                    : user
-            )
-        );
-
-    };
 
     const handleDelete = () => {
 
-        if (!userToDelete) return;
+        if (!categoryToDelete) return;
 
-        setUsers(prev =>
+        setStarSigns(prev =>
             prev.filter(
-                user =>
-                    user.id !== userToDelete.id
+                category =>
+                    category.id !== categoryToDelete.id
             )
         );
 
-        setSelectedUsers(new Set());
+        setSelectedstarSigns(new Set());
 
-        setUserToDelete(null);
+        setCategoryToDelete(null);
 
         setIsDeleteModalOpen(false);
 
     };
-
     return (
 
         <div className="w-full min-h-screen text-[#111827]">
@@ -299,7 +298,7 @@ export default function SubscribedUsers() {
 
                             setIsDeleteModalOpen(false);
 
-                            setUserToDelete(null);
+                            setCategoryToDelete(null);
 
                         }}
                         onConfirm={handleDelete}
@@ -312,7 +311,9 @@ export default function SubscribedUsers() {
 
                     <div className="overflow-x-auto scrollbar-thin">
                         <h1 className="text-[28px] font-semibold text-[#101828]">
-                            Subscribed Users
+
+                            Star Sign List
+
                         </h1>
 
                     </div>
@@ -366,7 +367,7 @@ export default function SubscribedUsers() {
                                     <button
                                         onClick={() => {
 
-                                            console.table(filteredUsers);
+                                            console.table(filteredstarSigns);
 
                                             setIsExportOpen(false);
 
@@ -387,50 +388,31 @@ export default function SubscribedUsers() {
                     </div>
 
                 </div>
-                <StatsCards
-                    stats={stats}
-                    cols={4}
-                />
+                {/* Stats Cards */}
+                <StatsCard stats={starSignStats} />
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
                     <div className="w-full overflow-x-auto">
 
-                        <table className="min-w-[1200px] w-full border-collapse">
+                        <table className="min-w-[1300px] w-full border-collapse">
 
                             <TableHeader
                                 columns={[
                                     {
-                                        label: "Profile",
-                                        width: "90px",
-                                    },
-                                    {
-                                        label: "User Name",
+                                        label: "Star Sign",
                                         width: "180px",
                                     },
                                     {
-                                        label: "Email",
-                                        width: "220px",
+                                        label: "Sign Name",
+                                        width: "260px",
                                     },
                                     {
-                                        label: "Contact",
-                                        width: "170px",
-                                    },
-                                    {
-                                        label: "Country",
-                                        width: "140px",
+                                        label: "Sign Description",
+                                        width: "520px",
                                     },
 
                                     {
-                                        label: "Mode",
-                                        width: "130px",
-                                    },
-                                    {
-                                        label: "Approved",
-                                        width: "170px",
-                                        className: "text-center",
-                                    },
-                                    {
                                         label: "Action",
-                                        width: "120px",
+                                        width: "180px",
                                         className: "text-center",
                                     },
                                 ]}
@@ -440,20 +422,20 @@ export default function SubscribedUsers() {
                             />
 
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedUsers.map((user, idx) => (
+                                {paginatedstarSigns.map((category, idx) => (
 
                                     <tr
-                                        key={user.id}
+
                                         className="hover:bg-gray-50 transition-colors"
                                     >
 
                                         {/* Checkbox */}
 
-                                        <td className="px-4 py-4">
+                                        <td className="pl-8 px-4 py-4">
 
                                             <input
                                                 type="checkbox"
-                                                checked={selectedUsers.has(idx)}
+                                                checked={selectedstarSigns.has(idx)}
                                                 onChange={(e) =>
                                                     handleSelectUser(
                                                         idx,
@@ -464,111 +446,54 @@ export default function SubscribedUsers() {
                                             />
 
                                         </td>
+                                        <td
+                                            className="pl-22 px-6 py-5 whitespace-nowrap"
 
-                                        {/* Profile */}
+                                        >
 
-                                        <td className="pl-9 px-4 py-5 whitespace-nowrap">
-
-                                            <img
-                                                src={user.profile}
-                                                alt={user.userName}
-                                                className="w-11 h-11 rounded-full object-cover border border-gray-200 shadow-sm"
-                                            />
+                                            <div className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 text-3xl">
+                                                {category.symbol}
+                                            </div>
 
                                         </td>
+                                        <td
+                                            className="pl-36 px-6 py-5 whitespace-nowrap"
 
-                                        {/* Username */}
-
-                                        <td className="pl-16 px-4 py-5 whitespace-nowrap">
+                                        >
 
                                             <p className="text-[15px] font-medium text-[#111827]">
-                                                {user.userName}
+                                                {category.name}
                                             </p>
 
                                         </td>
+                                        <td
+                                            className="pl-70 px-6 py-5"
 
-                                        {/* Email */}
+                                        >
 
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-
-                                            <p className="text-[14px] text-gray-600">
-                                                {user.email}
+                                            <p className="text-[14px] text-gray-600 break-words">
+                                                {category.description}
                                             </p>
-
-                                        </td>
-
-                                        {/* Contact */}
-
-                                        <td className="pl-18 px-4 py-5 whitespace-nowrap">
-
-                                            <p className="text-[14px] text-gray-600">
-                                                {user.contact}
-                                            </p>
-
-                                        </td>
-
-                                        {/* Country */}
-
-                                        <td className="pl-24 px-4 py-5 whitespace-nowrap">
-
-                                            <p className="text-[14px] text-gray-700">
-                                                {user.country}
-                                            </p>
-
-                                        </td>
-
-
-                                        {/* Mode */}
-
-                                        <td className="pl-10 px-4 py-5 whitespace-nowrap">
-
-                                            <Tags
-                                                text={user.mode}
-                                                variant={
-                                                    user.mode === "Premium"
-                                                        ? "green"
-                                                        : "gray"
-                                                }
-                                            />
-
-                                        </td>
-
-                                        {/* Approved */}
-
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-
-                                            <Tags
-                                                text={
-                                                    user.approved
-                                                        ? "Approved"
-                                                        : "Not Approved"
-                                                }
-                                                variant={
-                                                    user.approved
-                                                        ? "green"
-                                                        : "red"
-                                                }
-                                            />
 
                                         </td>
 
                                         {/* Action */}
 
-                                        <td className="pl-8 px-4 py-5 whitespace-nowrap">
+                                        <td
+                                            className="px-4 py-5 text-center whitespace-nowrap"
+
+                                        >
 
                                             <Action
-                                                showView={true}
-                                                showEdit={false}
+                                                showView={false}
+                                                showEdit={true}
                                                 showDelete={true}
-                                                onView={() =>
-                                                    console.log(
-                                                        "View User",
-                                                        user
-                                                    )
+                                                onEdit={() =>
+                                                    console.log("Edit Category", category)
                                                 }
                                                 onDelete={() => {
 
-                                                    setUserToDelete(user);
+                                                    setCategoryToDelete(category);
 
                                                     setIsDeleteModalOpen(true);
 
@@ -581,16 +506,16 @@ export default function SubscribedUsers() {
 
                                 ))}
 
-                                {filteredUsers.length === 0 && (
+                                {filteredstarSigns.length === 0 && (
 
                                     <tr>
 
                                         <td
-                                            colSpan={11}
+                                            colSpan={5}
                                             className="py-10 text-center text-gray-400 italic"
                                         >
 
-                                            No users found.
+                                            No starSigns found.
 
                                         </td>
 
@@ -610,7 +535,7 @@ export default function SubscribedUsers() {
                     totalPages={Math.max(
                         1,
                         Math.ceil(
-                            filteredUsers.length /
+                            filteredstarSigns.length /
                             rowsPerPage
                         )
                     )}

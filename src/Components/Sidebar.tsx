@@ -7,6 +7,17 @@ import {
     X,
     Minus,
     Plus,
+    Grid3X3,
+    Heart,
+    Sparkles,
+    Landmark,
+    CalendarDays,
+    Wallet,
+    Shuffle,
+    Ticket,
+    Flag,
+    UserCog,
+    Settings as SettingsIcon,
 } from "lucide-react";
 import "./_theme.scss";
 
@@ -85,6 +96,102 @@ export default function SideBar({
                         },
                     ],
                 },
+                {
+                    name: "Category",
+                    icon: Grid3X3,
+                    children: [
+                        {
+                            name: "All Category",
+                            path: "/category/all-category",
+                        },
+                        {
+                            name: "Add Main Category",
+                            path: "/category/add-category",
+                        },
+                    ],
+                },
+                {
+                    name: "Interest",
+                    icon: Heart,
+                    children: [
+                        {
+                            name: "All Interest",
+                            path: "/interest/all-interest",
+                        },
+                        {
+                            name: "Add New Interest",
+                            path: "/interest/add-interest",
+                        },
+                    ],
+                },
+                {
+                    name: "Star Sign",
+                    icon: Sparkles,
+                    children: [
+                        {
+                            name: "All Star Sign",
+                            path: "/starsign/all-starsign",
+                        },
+                        {
+                            name: "Add New Star Sign",
+                            path: "/starsign/add-starsign",
+                        },
+                    ],
+                },
+                {
+                    name: "Religion",
+                    icon: Landmark,
+                    children: [
+                        { name: "All Religion", path: "/religion/all-religion" },
+                        { name: "Add Religion", path: "/religion/add-religion" },
+                    ],
+                },
+                {
+                    name: "Event",
+                    icon: CalendarDays,
+                    children: [
+                        { name: "All Event", path: "/event/all-event" },
+                        { name: "Add Main Event", path: "/event/add-event" },
+                    ],
+                },
+                {
+                    name: "Payment List",
+                    icon: Wallet,
+                    path: "/payment/payment-list"
+                },
+                {
+                    name: "Matches",
+                    icon: Shuffle,
+                    path: "/matches/all-matches"
+                },
+                {
+                    name: "Ticket",
+                    icon: Ticket,
+                    path: "/ticket/all-tickets"
+                },
+                {
+                    name: "Report",
+                    icon: Flag,
+
+                    children: [
+                        { name: "Report List", path: "/report/all-reports" },
+                        { name: "Add Reports", path: "/report/add-reports" },
+                    ],
+                },
+                {
+                    name: "Event Manager",
+                    icon: UserCog,
+                    children: [
+                        { name: "Manager List", path: "/event-manager/manager-list" },
+                        { name: "Add Manager", path: "/event-manager/add-manager" },
+                    ],
+                },
+                {
+                    name: "Settings",
+                    icon: SettingsIcon,
+                    path: "/settings",
+                },
+
             ],
         },
     ];
@@ -180,16 +287,18 @@ export default function SideBar({
 
                 <div className="relative h-full border-r border-gray-100 bg-white flex flex-col">
                     <div className="flex items-center justify-between px-6 h-[70px] shrink-0">
-                        <div className="flex items-center gap-2">
-                            <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center shadow-md">
-                                <span className="text-white text-lg font-bold">
-                                    D
-                                </span>
-                            </div>
+                        <div className="flex items-center gap-3">
+
+                            <img
+                                src="/logo/logo-icon.png"
+                                alt="DesiMates"
+                                className="w-10 h-10 object-contain"
+                            />
 
                             <span className="text-[20px] font-bold text-[#111827]">
                                 {siteName}
                             </span>
+
                         </div>
                         <button onClick={() => setIsOpen(false)} className="lg:hidden p-2 text-gray-400 hover:text-gray-600">
                             <X size={20} />

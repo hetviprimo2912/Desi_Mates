@@ -2,12 +2,12 @@ import { useState, useRef, useEffect } from "react";
 import {
     ChevronDown,
     Download,
-    Users,
-    UserCheck,
-    Heart,
-    Crown,
+    Grid3X3,
+    CheckCircle2,
+    CircleOff,
+    Sparkles,
 } from "lucide-react";
-import StatsCards from "../../Components/StatsCard";
+
 import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
@@ -15,111 +15,87 @@ import Tags from "../../Components/Tags";
 import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
+import StatsCard from "../../Components/StatsCard";
 
-interface User {
+interface Category {
     id: number;
-    profile: string;
-    userName: string;
-    email: string;
-    contact: string;
-    country: string;
-
-    mode: string;
-    approved: boolean;
+    image: string;
+    name: string;
+    description: string;
+    status: boolean;
 }
 
-const initialUsers: User[] = [
+const initialCategories = [
     {
         id: 1,
-        profile: "https://i.pravatar.cc/150?img=1",
-        userName: "John Doe",
-        email: "john@gmail.com",
-        contact: "+91 9876543210",
-        country: "India",
-
-        mode: "Premium",
-        approved: true,
+        image: "https://picsum.photos/80?1",
+        name: "Music",
+        description: "Music related categories",
+        status: true,
     },
     {
         id: 2,
-        profile: "https://i.pravatar.cc/150?img=2",
-        userName: "Emma Watson",
-        email: "emma@gmail.com",
-        contact: "+44 7856321458",
-        country: "United Kingdom",
-
-        mode: "Free",
-        approved: false,
+        image: "https://picsum.photos/80?2",
+        name: "Podcast",
+        description: "Podcast content",
+        status: false,
     },
     {
         id: 3,
-        profile: "https://i.pravatar.cc/150?img=3",
-        userName: "Rahul Sharma",
-        email: "rahul@gmail.com",
-        contact: "+91 9999999999",
-        country: "India",
-
-        mode: "Premium",
-        approved: true,
+        image: "https://picsum.photos/80?3",
+        name: "Health",
+        description: "Health and fitness",
+        status: true,
     },
     {
         id: 4,
-        profile: "https://i.pravatar.cc/150?img=4",
-        userName: "Sophia Brown",
-        email: "sophia@gmail.com",
-        contact: "+1 234567890",
-        country: "USA",
-
-        mode: "Free",
-        approved: true,
+        image: "https://picsum.photos/80?4",
+        name: "Travel",
+        description: "Travel experiences",
+        status: true,
     },
     {
         id: 5,
-        profile: "https://i.pravatar.cc/150?img=5",
-        userName: "David Miller",
-        email: "david@gmail.com",
-        contact: "+61 456789123",
-        country: "Australia",
-
-        mode: "Premium",
-        approved: false,
+        image: "https://picsum.photos/80?5",
+        name: "Sports",
+        description: "Sports updates",
+        status: false,
     },
 ];
-const stats = [
+const categoryStats = [
     {
-        label: "Total Subscribers",
-        value: 540,
-        icon: <Users size={24} className="text-blue-600" />,
+        label: "Total Categories",
+        value: "18",
+        sub: "Total available categories",
+        icon: <Grid3X3 size={24} className="text-blue-600" />,
         bg: "bg-blue-50",
-        change: "+10.4% this month",
     },
     {
-        label: "Active Subscribers",
-        value: 495,
-        icon: <UserCheck size={24} className="text-green-600" />,
+        label: "Active Categories",
+        value: "15",
+        sub: "Visible to users",
+        icon: <CheckCircle2 size={24} className="text-green-600" />,
         bg: "bg-green-50",
-        change: "+6.8% this month",
     },
     {
-        label: "Premium Plans",
-        value: 310,
-        icon: <Crown size={24} className="text-orange-600" />,
-        bg: "bg-orange-50",
-        change: "+15.4% this month",
-    },
-    {
-        label: "Expired Plans",
-        value: 45,
-        icon: <Heart size={24} className="text-red-500" />,
+        label: "Inactive Categories",
+        value: "3",
+        sub: "Hidden categories",
+        icon: <CircleOff size={24} className="text-red-600" />,
         bg: "bg-red-50",
-        change: "-3.2% this month",
-        isNegative: true,
+    },
+    {
+        label: "Recently Added",
+        value: "2",
+        sub: "Added this month",
+        icon: <Sparkles size={24} className="text-yellow-600" />,
+        bg: "bg-yellow-50",
     },
 ];
-export default function SubscribedUsers() {
+export default function AllUsers() {
 
-    const [users, setUsers] =
-        useState<User[]>(initialUsers);
+    const [categories, setCategories] =
+        useState<Category[]>(initialCategories);
 
     const [searchTerm, setSearchTerm] =
         useState("");
@@ -130,7 +106,7 @@ export default function SubscribedUsers() {
     const [currentPage, setCurrentPage] =
         useState(1);
 
-    const [selectedUsers, setSelectedUsers] =
+    const [selectedCategories, setSelectedCategories] =
         useState<Set<number>>(new Set());
 
     const [isExportOpen, setIsExportOpen] =
@@ -139,26 +115,23 @@ export default function SubscribedUsers() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] =
         useState(false);
 
-    const [userToDelete, setUserToDelete] =
-        useState<User | null>(null);
+    const [categoryToDelete, setCategoryToDelete] =
+        useState<Category | null>(null);
 
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-    const filteredUsers = users.filter(
-        (user) =>
-            user.userName
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase()) ||
-            user.email
+    const filteredCategories =
+        categories.filter(category =>
+            category.name
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
-    );
+        );
     const startIndex =
         (currentPage - 1) * rowsPerPage;
 
-    const paginatedUsers =
-        filteredUsers.slice(
+    const paginatedCategories =
+        filteredCategories.slice(
             startIndex,
             startIndex + rowsPerPage
         );
@@ -202,15 +175,15 @@ export default function SubscribedUsers() {
 
         if (checked) {
 
-            setSelectedUsers(
+            setSelectedCategories(
                 new Set(
-                    paginatedUsers.map((_, index) => index)
+                    paginatedCategories.map((_, index) => index)
                 )
             );
 
         } else {
 
-            setSelectedUsers(
+            setSelectedCategories(
                 new Set()
             );
 
@@ -224,7 +197,7 @@ export default function SubscribedUsers() {
     ) => {
 
         const updated =
-            new Set(selectedUsers);
+            new Set(selectedCategories);
 
         if (checked) {
 
@@ -236,57 +209,52 @@ export default function SubscribedUsers() {
 
         }
 
-        setSelectedUsers(updated);
+        setSelectedCategories(updated);
 
     };
 
     const isAllSelected =
-        paginatedUsers.length > 0 &&
-        filteredUsers.every((_, index) =>
-            selectedUsers.has(index)
+        paginatedCategories.length > 0 &&
+        filteredCategories.every((_, index) =>
+            selectedCategories.has(index)
         );
 
     const isIndeterminate =
-        paginatedUsers.some((_, index) =>
-            selectedUsers.has(index)
+        paginatedCategories.some((_, index) =>
+            selectedCategories.has(index)
         ) && !isAllSelected;
+    const handleToggleStatus = (id: number) => {
 
-    const handleToggleApproval = (
-        id: number
-    ) => {
-
-        setUsers(prev =>
-            prev.map(user =>
-                user.id === id
+        setCategories(prev =>
+            prev.map(category =>
+                category.id === id
                     ? {
-                        ...user,
-                        approved: !user.approved,
+                        ...category,
+                        status: !category.status,
                     }
-                    : user
+                    : category
             )
         );
 
     };
-
     const handleDelete = () => {
 
-        if (!userToDelete) return;
+        if (!categoryToDelete) return;
 
-        setUsers(prev =>
+        setCategories(prev =>
             prev.filter(
-                user =>
-                    user.id !== userToDelete.id
+                category =>
+                    category.id !== categoryToDelete.id
             )
         );
 
-        setSelectedUsers(new Set());
+        setSelectedCategories(new Set());
 
-        setUserToDelete(null);
+        setCategoryToDelete(null);
 
         setIsDeleteModalOpen(false);
 
     };
-
     return (
 
         <div className="w-full min-h-screen text-[#111827]">
@@ -299,7 +267,7 @@ export default function SubscribedUsers() {
 
                             setIsDeleteModalOpen(false);
 
-                            setUserToDelete(null);
+                            setCategoryToDelete(null);
 
                         }}
                         onConfirm={handleDelete}
@@ -312,7 +280,9 @@ export default function SubscribedUsers() {
 
                     <div className="overflow-x-auto scrollbar-thin">
                         <h1 className="text-[28px] font-semibold text-[#101828]">
-                            Subscribed Users
+
+                            Category List
+
                         </h1>
 
                     </div>
@@ -366,7 +336,7 @@ export default function SubscribedUsers() {
                                     <button
                                         onClick={() => {
 
-                                            console.table(filteredUsers);
+                                            console.table(filteredCategories);
 
                                             setIsExportOpen(false);
 
@@ -387,50 +357,34 @@ export default function SubscribedUsers() {
                     </div>
 
                 </div>
-                <StatsCards
-                    stats={stats}
-                    cols={4}
-                />
+                <StatsCard stats={categoryStats} />
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
                     <div className="w-full overflow-x-auto">
 
-                        <table className="min-w-[1200px] w-full border-collapse">
+                        <table className="min-w-[1300px] w-full border-collapse">
 
                             <TableHeader
                                 columns={[
                                     {
-                                        label: "Profile",
-                                        width: "90px",
-                                    },
-                                    {
-                                        label: "User Name",
+                                        label: "Category Image",
                                         width: "180px",
                                     },
                                     {
-                                        label: "Email",
-                                        width: "220px",
+                                        label: "Category Name",
+                                        width: "260px",
                                     },
                                     {
-                                        label: "Contact",
-                                        width: "170px",
+                                        label: "Description",
+                                        width: "520px",
                                     },
                                     {
-                                        label: "Country",
-                                        width: "140px",
-                                    },
-
-                                    {
-                                        label: "Mode",
-                                        width: "130px",
-                                    },
-                                    {
-                                        label: "Approved",
-                                        width: "170px",
+                                        label: "Satus",
+                                        width: "180px",
                                         className: "text-center",
                                     },
                                     {
                                         label: "Action",
-                                        width: "120px",
+                                        width: "180px",
                                         className: "text-center",
                                     },
                                 ]}
@@ -440,20 +394,20 @@ export default function SubscribedUsers() {
                             />
 
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedUsers.map((user, idx) => (
+                                {paginatedCategories.map((category, idx) => (
 
                                     <tr
-                                        key={user.id}
+
                                         className="hover:bg-gray-50 transition-colors"
                                     >
 
                                         {/* Checkbox */}
 
-                                        <td className="px-4 py-4">
+                                        <td className="pl-6 px-4 py-4">
 
                                             <input
                                                 type="checkbox"
-                                                checked={selectedUsers.has(idx)}
+                                                checked={selectedCategories.has(idx)}
                                                 onChange={(e) =>
                                                     handleSelectUser(
                                                         idx,
@@ -464,111 +418,75 @@ export default function SubscribedUsers() {
                                             />
 
                                         </td>
+                                        <td
+                                            className="pl-20 px-6 py-5 whitespace-nowrap"
 
-                                        {/* Profile */}
-
-                                        <td className="pl-9 px-4 py-5 whitespace-nowrap">
+                                        >
 
                                             <img
-                                                src={user.profile}
-                                                alt={user.userName}
-                                                className="w-11 h-11 rounded-full object-cover border border-gray-200 shadow-sm"
+                                                src={category.image}
+                                                alt={category.name}
+                                                className="w-12 h-12 rounded-lg object-cover border border-gray-200"
                                             />
 
                                         </td>
+                                        <td
+                                            className="pl-32 px-6 py-5 whitespace-nowrap"
 
-                                        {/* Username */}
-
-                                        <td className="pl-16 px-4 py-5 whitespace-nowrap">
+                                        >
 
                                             <p className="text-[15px] font-medium text-[#111827]">
-                                                {user.userName}
+                                                {category.name}
                                             </p>
 
                                         </td>
+                                        <td
+                                            className="pl-60 px-6 py-5"
 
-                                        {/* Email */}
+                                        >
 
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-
-                                            <p className="text-[14px] text-gray-600">
-                                                {user.email}
+                                            <p className="text-[14px] text-gray-600 break-words">
+                                                {category.description}
                                             </p>
 
                                         </td>
+                                        <td className="px-6 py-5">
 
-                                        {/* Contact */}
+                                            <div className="flex items-center justify-center gap-3">
 
-                                        <td className="pl-18 px-4 py-5 whitespace-nowrap">
+                                                <Tags
+                                                    text={category.status ? "Active" : "Inactive"}
+                                                    variant={category.status ? "green" : "red"}
+                                                />
 
-                                            <p className="text-[14px] text-gray-600">
-                                                {user.contact}
-                                            </p>
+                                                <TogglableSwitch
+                                                    isActive={category.status}
+                                                    onToggle={() =>
+                                                        handleToggleStatus(category.id)
+                                                    }
+                                                    showLabel={false}
+                                                />
 
-                                        </td>
-
-                                        {/* Country */}
-
-                                        <td className="pl-24 px-4 py-5 whitespace-nowrap">
-
-                                            <p className="text-[14px] text-gray-700">
-                                                {user.country}
-                                            </p>
-
-                                        </td>
-
-
-                                        {/* Mode */}
-
-                                        <td className="pl-10 px-4 py-5 whitespace-nowrap">
-
-                                            <Tags
-                                                text={user.mode}
-                                                variant={
-                                                    user.mode === "Premium"
-                                                        ? "green"
-                                                        : "gray"
-                                                }
-                                            />
+                                            </div>
 
                                         </td>
-
-                                        {/* Approved */}
-
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-
-                                            <Tags
-                                                text={
-                                                    user.approved
-                                                        ? "Approved"
-                                                        : "Not Approved"
-                                                }
-                                                variant={
-                                                    user.approved
-                                                        ? "green"
-                                                        : "red"
-                                                }
-                                            />
-
-                                        </td>
-
                                         {/* Action */}
 
-                                        <td className="pl-8 px-4 py-5 whitespace-nowrap">
+                                        <td
+                                            className="px-4 py-5 text-center whitespace-nowrap"
+
+                                        >
 
                                             <Action
-                                                showView={true}
-                                                showEdit={false}
+                                                showView={false}
+                                                showEdit={true}
                                                 showDelete={true}
-                                                onView={() =>
-                                                    console.log(
-                                                        "View User",
-                                                        user
-                                                    )
+                                                onEdit={() =>
+                                                    console.log("Edit Category", category)
                                                 }
                                                 onDelete={() => {
 
-                                                    setUserToDelete(user);
+                                                    setCategoryToDelete(category);
 
                                                     setIsDeleteModalOpen(true);
 
@@ -581,16 +499,16 @@ export default function SubscribedUsers() {
 
                                 ))}
 
-                                {filteredUsers.length === 0 && (
+                                {filteredCategories.length === 0 && (
 
                                     <tr>
 
                                         <td
-                                            colSpan={11}
+                                            colSpan={5}
                                             className="py-10 text-center text-gray-400 italic"
                                         >
 
-                                            No users found.
+                                            No categories found.
 
                                         </td>
 
@@ -610,7 +528,7 @@ export default function SubscribedUsers() {
                     totalPages={Math.max(
                         1,
                         Math.ceil(
-                            filteredUsers.length /
+                            filteredCategories.length /
                             rowsPerPage
                         )
                     )}

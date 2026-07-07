@@ -4,7 +4,6 @@ import {
     SearchCheck,
     X,
     Bell,
-    LayoutDashboard,
     LogOut,
     FileText,
 } from "lucide-react";
@@ -51,11 +50,86 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
         {
             heading: "MAIN",
             items: [
-                {
-                    name: "Dashboard",
-                    icon: LayoutDashboard,
-                    path: "/dashboard",
-                },
+                { name: "Dashboard", path: "/dashboard" },
+            ],
+        },
+        {
+            heading: "USERS",
+            items: [
+                { name: "All Users", path: "/all-users" },
+                { name: "Subscribed Users", path: "/sub-users" },
+            ],
+        },
+        {
+            heading: "CATEGORY",
+            items: [
+                { name: "All Category", path: "/category/all-category" },
+                { name: "Add Category", path: "/category/add-category" },
+            ],
+        },
+        {
+            heading: "INTEREST",
+            items: [
+                { name: "All Interest", path: "/interest/all-interest" },
+                { name: "Add Interest", path: "/interest/add-interest" },
+            ],
+        },
+        {
+            heading: "STAR SIGN",
+            items: [
+                { name: "All Star Sign", path: "/starsign/all-starsign" },
+                { name: "Add Star Sign", path: "/starsign/add-starsign" },
+            ],
+        },
+        {
+            heading: "RELIGION",
+            items: [
+                { name: "All Religion", path: "/religion/all-religion" },
+                { name: "Add Religion", path: "/religion/add-religion" },
+            ],
+        },
+        {
+            heading: "EVENT",
+            items: [
+                { name: "All Event", path: "/event/all-event" },
+                { name: "Add Event", path: "/event/add-event" },
+            ],
+        },
+        {
+            heading: "PAYMENT",
+            items: [
+                { name: "Payment List", path: "/payment/payment-list" },
+            ],
+        },
+        {
+            heading: "MATCHES",
+            items: [
+                { name: "All Matches", path: "/matches/all-matches" },
+            ],
+        },
+        {
+            heading: "TICKET",
+            items: [
+                { name: "All Tickets", path: "/ticket/all-tickets" },
+            ],
+        },
+        {
+            heading: "REPORT",
+            items: [
+                { name: "Report List", path: "/report/all-reports" },
+            ],
+        },
+        {
+            heading: "EVENT MANAGER",
+            items: [
+                { name: "Manager List", path: "/event-manager/manager-list" },
+                { name: "Add Manager", path: "/event-manager/add-manager" },
+            ],
+        },
+        {
+            heading: "SETTINGS",
+            items: [
+                { name: "Settings", path: "/settings" },
             ],
         },
     ];
@@ -123,7 +197,11 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
         <>
             <header className="theme-container fixed top-0 right-0 z-[45] w-full lg:w-[calc(100%-280px)] lg:ml-[280px] h-[70px] bg-white flex items-center justify-between px-6 shadow-sm font-inter text-left">
                 <div className="flex items-center gap-4">
-                    <img src="./Images/Logo.png" alt="logo" className='h-9 w-26 lg:hidden pl-12' />
+                    <img
+                        src="/logo/logo.png"
+                        alt="DesiMates"
+                        className="h-10 w-auto lg:hidden pl-12 object-contain"
+                    />
 
                     <button onClick={toggleSearch} className="lg:hidden rounded-full hover:bg-gray-100 p-2">
                         <SearchCheck className="w-6 h-6 text-gray-500" />
