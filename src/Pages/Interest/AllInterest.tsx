@@ -11,56 +11,21 @@ import StatsCard from "../../Components/StatsCard";
 import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
-import Tags from "../../Components/Tags";
-import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
+import { useDispatch, useSelector } from "react-redux";
 
-interface Interests {
-    id: number;
-    image: string;
-    name: string;
-    description: string;
+import { interest_list } from "../../Store/slices/InterestSlice/interest_list_thunk";
 
-}
+import type {
+    InterestItem,
+} from "../../Types/InterestTypes/interest_list_types";
 
-const initialInterests: Interests[] = [
-    {
-        id: 1,
-        image: "https://picsum.photos/80?11",
-        name: "Photography",
-        description: "Photography lovers",
+import type {
+    RootState,
+    AppDispatch,
+} from "../../Store/store";
 
-    },
-    {
-        id: 2,
-        image: "https://picsum.photos/80?12",
-        name: "Cooking",
-        description: "Cooking enthusiasts",
-
-    },
-    {
-        id: 3,
-        image: "https://picsum.photos/80?13",
-        name: "Travel",
-        description: "Travel experiences",
-
-    },
-    {
-        id: 4,
-        image: "https://picsum.photos/80?14",
-        name: "Reading",
-        description: "Books and novels",
-
-    },
-    {
-        id: 5,
-        image: "https://picsum.photos/80?15",
-        name: "Gaming",
-        description: "Console & PC gaming",
-
-    },
-];
 const interestStats = [
     {
         label: "Total Interests",
@@ -91,12 +56,21 @@ const interestStats = [
         bg: "bg-green-50",
     },
 ];
-export default function AllUsers() {
+export default function AllInterest() {
 
-    const [interests, setInterests] =
-        useState<Interests[]>(initialInterests);
+    const dispatch = useDispatch<AppDispatch>();
+    const {
+        interest,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.interest_list
+    );
 
     const [searchTerm, setSearchTerm] =
+        useState("");
+
+    const [debouncedSearch, setDebouncedSearch] =
         useState("");
 
     const [rowsPerPage, setRowsPerPage] =
@@ -115,25 +89,12 @@ export default function AllUsers() {
         useState(false);
 
     const [categoryToDelete, setCategoryToDelete] =
-        useState<Interests | null>(null);
+        useState<InterestItem | null>(null);
 
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-    const filteredInterests =
-        interests.filter(category =>
-            category.name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-        );
-    const startIndex =
-        (currentPage - 1) * rowsPerPage;
 
-    const paginatedInterests =
-        filteredInterests.slice(
-            startIndex,
-            startIndex + rowsPerPage
-        );
     useEffect(() => {
 
         function handleClickOutside(
@@ -165,9 +126,37 @@ export default function AllUsers() {
     }, []);
     useEffect(() => {
 
-        setCurrentPage(1);
+        const timer = setTimeout(() => {
+
+            setDebouncedSearch(searchTerm);
+
+            setCurrentPage(1);
+
+        }, 1000);
+
+        return () => clearTimeout(timer);
 
     }, [searchTerm]);
+    useEffect(() => {
+
+        dispatch(
+            interest_list({
+
+                page_no: currentPage,
+
+                per_page: rowsPerPage,
+
+                search: debouncedSearch,
+
+            })
+        );
+
+    }, [
+        dispatch,
+        currentPage,
+        rowsPerPage,
+        debouncedSearch,
+    ]);
     const handleSelectAll = (
         checked: boolean
     ) => {
@@ -176,7 +165,7 @@ export default function AllUsers() {
 
             setSelectedInterests(
                 new Set(
-                    paginatedInterests.map((_, index) => index)
+                    interest.map((_, index) => index)
                 )
             );
 
@@ -213,26 +202,19 @@ export default function AllUsers() {
     };
 
     const isAllSelected =
-        paginatedInterests.length > 0 &&
-        filteredInterests.every((_, index) =>
+        interest.length > 0 &&
+        interest.every((_, index) =>
             selectedInterests.has(index)
         );
 
     const isIndeterminate =
-        paginatedInterests.some((_, index) =>
+        interest.some((_, index) =>
             selectedInterests.has(index)
         ) && !isAllSelected;
 
     const handleDelete = () => {
 
         if (!categoryToDelete) return;
-
-        setInterests(prev =>
-            prev.filter(
-                category =>
-                    category.id !== categoryToDelete.id
-            )
-        );
 
         setSelectedInterests(new Set());
 
@@ -280,7 +262,7 @@ export default function AllUsers() {
                             <Search
                                 searchTerm={searchTerm}
                                 setSearchTerm={setSearchTerm}
-                                placeholder="Search User..."
+                                placeholder="Search Interest..."
                             />
 
                         </div>
@@ -322,7 +304,7 @@ export default function AllUsers() {
                                     <button
                                         onClick={() => {
 
-                                            console.table(filteredInterests);
+                                            console.table(interest);
 
                                             setIsExportOpen(false);
 
@@ -344,7 +326,48 @@ export default function AllUsers() {
 
                 </div>
                 {/* Stats Cards */}
-                <StatsCard stats={interestStats} />
+                {/* Stats Cards */}
+
+                {loading ? (
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+
+                        {[...Array(4)].map((_, index) => (
+
+                            <div
+                                key={index}
+                                className="bg-white border border-gray-200 rounded-xl p-6"
+                            >
+
+                                <div className="flex items-center gap-4">
+
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+
+                                    <div className="flex-1">
+
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        ))}
+
+                    </div>
+
+                ) : (
+
+                    <StatsCard
+                        stats={interestStats}
+                    />
+
+                )}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
                     <div className="w-full overflow-x-auto">
 
@@ -377,93 +400,166 @@ export default function AllUsers() {
                             />
 
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedInterests.map((category, idx) => (
 
-                                    <tr
+                                {loading ? (
 
-                                        className="hover:bg-gray-50 transition-colors"
-                                    >
+                                    [...Array(rowsPerPage)].map((_, index) => (
 
-                                        {/* Checkbox */}
-
-                                        <td className="pl-6 px-4 py-4">
-
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedInterests.has(idx)}
-                                                onChange={(e) =>
-                                                    handleSelectUser(
-                                                        idx,
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
-                                            />
-
-                                        </td>
-                                        <td
-                                            className="pl-20 px-6 py-5 whitespace-nowrap"
-
+                                        <tr
+                                            key={index}
+                                            className="animate-pulse"
                                         >
 
-                                            <img
-                                                src={category.image}
-                                                alt={category.name}
-                                                className="w-12 h-12 rounded-lg object-cover border border-gray-200"
-                                            />
+                                            {/* Checkbox */}
 
-                                        </td>
-                                        <td
-                                            className="pl-32 px-6 py-5 whitespace-nowrap"
+                                            <td className="px-4 py-5">
 
+                                                <div className="h-4 w-4 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Image */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="w-12 h-12 rounded-lg bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Interest Name */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="h-4 w-32 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Description */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="h-4 w-56 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Action */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="flex justify-center">
+
+                                                    <div className="h-8 w-16 rounded bg-gray-200" />
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+
+                                ) : interest.length > 0 ? (
+
+                                    interest.map((category, idx) => (
+
+                                        <tr
+                                            key={category.id}
+                                            className="hover:bg-gray-50 transition-colors"
                                         >
 
-                                            <p className="text-[15px] font-medium text-[#111827]">
-                                                {category.name}
-                                            </p>
+                                            {/* Checkbox */}
 
-                                        </td>
-                                        <td
-                                            className="pl-70 px-6 py-5"
+                                            <td className="pl-6 px-4 py-4">
 
-                                        >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedInterests.has(idx)}
+                                                    onChange={(e) =>
+                                                        handleSelectUser(
+                                                            idx,
+                                                            e.target.checked
+                                                        )
+                                                    }
+                                                    className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
+                                                />
 
-                                            <p className="text-[14px] text-gray-600 break-words">
-                                                {category.description}
-                                            </p>
+                                            </td>
 
-                                        </td>
+                                            {/* Image */}
 
-                                        {/* Action */}
+                                            <td className="pl-20 px-6 py-5 whitespace-nowrap">
 
-                                        <td
-                                            className="px-4 py-5 text-center whitespace-nowrap"
+                                                {category.image ? (
 
-                                        >
+                                                    <img
+                                                        src={category.image}
+                                                        alt={category.name || "Interest"}
+                                                        className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                                                    />
 
-                                            <Action
-                                                showView={false}
-                                                showEdit={true}
-                                                showDelete={true}
-                                                onEdit={() =>
-                                                    console.log("Edit Category", category)
-                                                }
-                                                onDelete={() => {
+                                                ) : (
 
-                                                    setCategoryToDelete(category);
+                                                    <div className="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-500">
 
-                                                    setIsDeleteModalOpen(true);
+                                                        N/A
 
-                                                }}
-                                            />
+                                                    </div>
 
-                                        </td>
+                                                )}
 
-                                    </tr>
+                                            </td>
 
-                                ))}
+                                            {/* Name */}
 
-                                {filteredInterests.length === 0 && (
+                                            <td className="pl-32 px-6 py-5 whitespace-nowrap">
+
+                                                <p className="text-[15px] font-medium text-[#111827]">
+
+                                                    {category.name?.trim() || "N/A"}
+
+                                                </p>
+
+                                            </td>
+
+                                            {/* Description */}
+
+                                            <td className="pl-70 px-6 py-5">
+
+                                                <p className="text-[14px] text-gray-600 break-words">
+
+                                                    {category.description?.trim() || "N/A"}
+
+                                                </p>
+
+                                            </td>
+
+                                            {/* Action */}
+
+                                            <td className="px-4 py-5 text-center whitespace-nowrap">
+
+                                                <Action
+                                                    showView={false}
+                                                    showEdit={true}
+                                                    showDelete={true}
+                                                    onEdit={() =>
+                                                        console.log("Edit Interest", category)
+                                                    }
+                                                    onDelete={() => {
+
+                                                        setCategoryToDelete(category);
+
+                                                        setIsDeleteModalOpen(true);
+
+                                                    }}
+                                                />
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+
+                                ) : (
 
                                     <tr>
 
@@ -489,14 +585,8 @@ export default function AllUsers() {
 
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(
-                        1,
-                        Math.ceil(
-                            filteredInterests.length /
-                            rowsPerPage
-                        )
-                    )}
-                    rowsPerPage={rowsPerPage}
+                    totalPages={pagination?.total_pages || 1}
+                    rowsPerPage={pagination?.per_page || rowsPerPage}
                     onPageChange={(page) =>
                         setCurrentPage(page)
                     }

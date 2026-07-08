@@ -11,95 +11,42 @@ import {
 import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
-import Tags from "../../Components/Tags";
 import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import StatsCard from "../../Components/StatsCard";
+import { useDispatch, useSelector } from "react-redux";
 
-interface Category {
-    id: number;
-    image: string;
-    name: string;
-    description: string;
-    status: boolean;
-}
+import { all_category_list } from "../../Store/slices/CategorySlices/all_category_list_thunk";
+import type {
+    CategoryItem,
+} from "../../Types/CategoryTypes/all_category_list_types";
+import type { RootState, AppDispatch } from "../../Store/store";
+import { category_card }
+    from "../../Store/slices/CategorySlices/category_card_thunk";
 
-const initialCategories = [
-    {
-        id: 1,
-        image: "https://picsum.photos/80?1",
-        name: "Music",
-        description: "Music related categories",
-        status: true,
-    },
-    {
-        id: 2,
-        image: "https://picsum.photos/80?2",
-        name: "Podcast",
-        description: "Podcast content",
-        status: false,
-    },
-    {
-        id: 3,
-        image: "https://picsum.photos/80?3",
-        name: "Health",
-        description: "Health and fitness",
-        status: true,
-    },
-    {
-        id: 4,
-        image: "https://picsum.photos/80?4",
-        name: "Travel",
-        description: "Travel experiences",
-        status: true,
-    },
-    {
-        id: 5,
-        image: "https://picsum.photos/80?5",
-        name: "Sports",
-        description: "Sports updates",
-        status: false,
-    },
-];
-const categoryStats = [
-    {
-        label: "Total Categories",
-        value: "18",
-        sub: "Total available categories",
-        icon: <Grid3X3 size={24} className="text-blue-600" />,
-        bg: "bg-blue-50",
-    },
-    {
-        label: "Active Categories",
-        value: "15",
-        sub: "Visible to users",
-        icon: <CheckCircle2 size={24} className="text-green-600" />,
-        bg: "bg-green-50",
-    },
-    {
-        label: "Inactive Categories",
-        value: "3",
-        sub: "Hidden categories",
-        icon: <CircleOff size={24} className="text-red-600" />,
-        bg: "bg-red-50",
-    },
-    {
-        label: "Recently Added",
-        value: "2",
-        sub: "Added this month",
-        icon: <Sparkles size={24} className="text-yellow-600" />,
-        bg: "bg-yellow-50",
-    },
-];
-export default function AllUsers() {
+export default function AllCategory() {
 
-    const [categories, setCategories] =
-        useState<Category[]>(initialCategories);
+    const dispatch = useDispatch<AppDispatch>();
+
+    const {
+        category,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.category_list
+    );
+
+    const {
+        cards,
+    } = useSelector(
+        (state: RootState) => state.category_card
+    );
 
     const [searchTerm, setSearchTerm] =
         useState("");
-
+    const [debouncedSearch, setDebouncedSearch] =
+        useState("");
     const [rowsPerPage, setRowsPerPage] =
         useState(10);
 
@@ -116,25 +63,11 @@ export default function AllUsers() {
         useState(false);
 
     const [categoryToDelete, setCategoryToDelete] =
-        useState<Category | null>(null);
-
+        useState<CategoryItem | null>(null);
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-    const filteredCategories =
-        categories.filter(category =>
-            category.name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-        );
-    const startIndex =
-        (currentPage - 1) * rowsPerPage;
 
-    const paginatedCategories =
-        filteredCategories.slice(
-            startIndex,
-            startIndex + rowsPerPage
-        );
     useEffect(() => {
 
         function handleClickOutside(
@@ -166,9 +99,46 @@ export default function AllUsers() {
     }, []);
     useEffect(() => {
 
-        setCurrentPage(1);
+        const timer = setTimeout(() => {
+
+            setDebouncedSearch(searchTerm);
+
+            setCurrentPage(1);
+
+        }, 1000);
+
+        return () => clearTimeout(timer);
 
     }, [searchTerm]);
+    useEffect(() => {
+
+        dispatch(
+            all_category_list({
+
+                page_no: currentPage,
+
+                per_page: rowsPerPage,
+
+                search: debouncedSearch,
+
+            })
+        );
+
+        dispatch(
+            category_card()
+        );
+
+    }, [
+
+        dispatch,
+
+        currentPage,
+
+        rowsPerPage,
+
+        debouncedSearch,
+
+    ]);
     const handleSelectAll = (
         checked: boolean
     ) => {
@@ -177,7 +147,7 @@ export default function AllUsers() {
 
             setSelectedCategories(
                 new Set(
-                    paginatedCategories.map((_, index) => index)
+                    category.map((_, index) => index)
                 )
             );
 
@@ -214,39 +184,20 @@ export default function AllUsers() {
     };
 
     const isAllSelected =
-        paginatedCategories.length > 0 &&
-        filteredCategories.every((_, index) =>
+        category.length > 0 &&
+        category.every((_, index) =>
             selectedCategories.has(index)
         );
 
     const isIndeterminate =
-        paginatedCategories.some((_, index) =>
+        category.some((_, index) =>
             selectedCategories.has(index)
         ) && !isAllSelected;
-    const handleToggleStatus = (id: number) => {
 
-        setCategories(prev =>
-            prev.map(category =>
-                category.id === id
-                    ? {
-                        ...category,
-                        status: !category.status,
-                    }
-                    : category
-            )
-        );
-
-    };
     const handleDelete = () => {
 
         if (!categoryToDelete) return;
 
-        setCategories(prev =>
-            prev.filter(
-                category =>
-                    category.id !== categoryToDelete.id
-            )
-        );
 
         setSelectedCategories(new Set());
 
@@ -255,6 +206,65 @@ export default function AllUsers() {
         setIsDeleteModalOpen(false);
 
     };
+    const categoryStats = [
+
+        {
+
+            label: "Total Categories",
+
+            value: cards.total_category,
+
+            sub: "Total available categories",
+
+            icon: <Grid3X3 size={24} className="text-blue-600" />,
+
+            bg: "bg-blue-50",
+
+        },
+
+        {
+
+            label: "Active Categories",
+
+            value: cards.active_category,
+
+            sub: "Visible to users",
+
+            icon: <CheckCircle2 size={24} className="text-green-600" />,
+
+            bg: "bg-green-50",
+
+        },
+
+        {
+
+            label: "Inactive Categories",
+
+            value: cards.inactive_category,
+
+            sub: "Hidden categories",
+
+            icon: <CircleOff size={24} className="text-red-600" />,
+
+            bg: "bg-red-50",
+
+        },
+
+        {
+
+            label: "Recently Added",
+
+            value: cards.recently_added,
+
+            sub: "Added this month",
+
+            icon: <Sparkles size={24} className="text-yellow-600" />,
+
+            bg: "bg-yellow-50",
+
+        },
+
+    ];
     return (
 
         <div className="w-full min-h-screen text-[#111827]">
@@ -294,7 +304,7 @@ export default function AllUsers() {
                             <Search
                                 searchTerm={searchTerm}
                                 setSearchTerm={setSearchTerm}
-                                placeholder="Search User..."
+                                placeholder="Search Category..."
                             />
 
                         </div>
@@ -336,7 +346,7 @@ export default function AllUsers() {
                                     <button
                                         onClick={() => {
 
-                                            console.table(filteredCategories);
+                                            console.table(category);
 
                                             setIsExportOpen(false);
 
@@ -357,11 +367,50 @@ export default function AllUsers() {
                     </div>
 
                 </div>
-                <StatsCard stats={categoryStats} />
+                {loading ? (
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+
+                        {[...Array(4)].map((_, index) => (
+
+                            <div
+                                key={index}
+                                className="bg-white border border-gray-200 rounded-xl p-6"
+                            >
+
+                                <div className="flex items-center gap-4">
+
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+
+                                    <div className="flex-1">
+
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        ))}
+
+                    </div>
+
+                ) : (
+
+                    <StatsCard
+                        stats={categoryStats}
+                    />
+
+                )}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
                     <div className="w-full overflow-x-auto">
 
-                        <table className="min-w-[1300px] w-full border-collapse">
+                        <table className="min-w-[1100px] w-full border-collapse">
 
                             <TableHeader
                                 columns={[
@@ -371,14 +420,14 @@ export default function AllUsers() {
                                     },
                                     {
                                         label: "Category Name",
-                                        width: "260px",
+                                        width: "220px",
                                     },
                                     {
                                         label: "Description",
-                                        width: "520px",
+                                        width: "420px",
                                     },
                                     {
-                                        label: "Satus",
+                                        label: "Status",
                                         width: "180px",
                                         className: "text-center",
                                     },
@@ -394,126 +443,147 @@ export default function AllUsers() {
                             />
 
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedCategories.map((category, idx) => (
+                                {loading ? (
 
-                                    <tr
+                                    [...Array(rowsPerPage)].map((_, index) => (
 
-                                        className="hover:bg-gray-50 transition-colors"
-                                    >
-
-                                        {/* Checkbox */}
-
-                                        <td className="pl-6 px-4 py-4">
-
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedCategories.has(idx)}
-                                                onChange={(e) =>
-                                                    handleSelectUser(
-                                                        idx,
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
-                                            />
-
-                                        </td>
-                                        <td
-                                            className="pl-20 px-6 py-5 whitespace-nowrap"
-
+                                        <tr
+                                            key={index}
+                                            className="animate-pulse"
                                         >
 
-                                            <img
-                                                src={category.image}
-                                                alt={category.name}
-                                                className="w-12 h-12 rounded-lg object-cover border border-gray-200"
-                                            />
+                                            {/* Checkbox */}
 
-                                        </td>
-                                        <td
-                                            className="pl-32 px-6 py-5 whitespace-nowrap"
+                                            <td className="px-4 py-5">
 
-                                        >
+                                                <div className="h-4 w-4 rounded bg-gray-200" />
 
-                                            <p className="text-[15px] font-medium text-[#111827]">
-                                                {category.name}
-                                            </p>
+                                            </td>
 
-                                        </td>
-                                        <td
-                                            className="pl-60 px-6 py-5"
+                                            {/* Image */}
 
-                                        >
+                                            <td className="px-4 py-5">
 
-                                            <p className="text-[14px] text-gray-600 break-words">
-                                                {category.description}
-                                            </p>
+                                                <div className="w-12 h-12 rounded-lg bg-gray-200" />
 
-                                        </td>
-                                        <td className="px-6 py-5">
+                                            </td>
 
-                                            <div className="flex items-center justify-center gap-3">
+                                            {/* Category Name */}
 
-                                                <Tags
-                                                    text={category.status ? "Active" : "Inactive"}
-                                                    variant={category.status ? "green" : "red"}
+                                            <td className="px-4 py-5">
+
+                                                <div className="h-4 w-32 rounded bg-gray-200" />
+
+                                            </td>
+                                            {/* Description */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="h-4 w-56 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Status */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="flex justify-center">
+
+                                                    <div className="w-12 h-6 rounded-full bg-gray-200" />
+
+                                                </div>
+
+                                            </td>
+
+                                            {/* Action */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="flex justify-center">
+
+                                                    <div className="h-8 w-16 rounded bg-gray-200" />
+
+                                                </div>
+
+                                            </td>
+
+
+
+                                        </tr>
+
+                                    ))
+
+                                ) : (
+                                    category.map((cat, idx) => (
+                                        <tr key={cat.id} className="hover:bg-gray-50 transition-colors">
+                                            <td className="pl-6 px-4 py-4">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedCategories.has(idx)}
+                                                    onChange={(e) => handleSelectUser(idx, e.target.checked)}
+                                                    className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
                                                 />
+                                            </td>
+                                            <td className="pl-20 px-6 py-5 whitespace-nowrap">
+                                                {cat.image ? (
+                                                    <img
+                                                        src={cat.image}
+                                                        alt={cat.title || "Category"}
+                                                        className="w-12 h-12 rounded-lg object-cover border border-gray-200"
+                                                    />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center text-xs text-gray-500">
+                                                        N/A
+                                                    </div>
+                                                )}
+                                            </td>
+                                            <td className="pl-32 px-6 py-5 whitespace-nowrap">
+                                                <p className="text-[15px] font-medium text-[#111827]">
+                                                    {cat.title?.trim() || "N/A"}
+                                                </p>
+                                            </td>
+                                            <td className="pl-60 px-6 py-5">
+                                                <p className="text-[14px] text-gray-600 break-words">
+                                                    {cat.description?.trim() || "N/A"}
+                                                </p>
+                                            </td>
+
+                                            {/* Status */}
+
+                                            <td className="px-4 py-5 text-center">
 
                                                 <TogglableSwitch
-                                                    isActive={category.status}
+                                                    isActive={cat.status === "1"}
                                                     onToggle={() =>
-                                                        handleToggleStatus(category.id)
+                                                        console.log(
+                                                            "Status Changed",
+                                                            cat.id
+                                                        )
                                                     }
-                                                    showLabel={false}
                                                 />
 
-                                            </div>
+                                            </td>
 
-                                        </td>
-                                        {/* Action */}
+                                            {/* Action */}
 
-                                        <td
-                                            className="px-4 py-5 text-center whitespace-nowrap"
-
-                                        >
-
-                                            <Action
-                                                showView={false}
-                                                showEdit={true}
-                                                showDelete={true}
-                                                onEdit={() =>
-                                                    console.log("Edit Category", category)
-                                                }
-                                                onDelete={() => {
-
-                                                    setCategoryToDelete(category);
-
-                                                    setIsDeleteModalOpen(true);
-
-                                                }}
-                                            />
-
-                                        </td>
-
-                                    </tr>
-
-                                ))}
-
-                                {filteredCategories.length === 0 && (
-
+                                            <td className="px-4 py-5 text-center whitespace-nowrap">
+                                                <Action
+                                                    showView={false}
+                                                    showEdit={true}
+                                                    showDelete={true}
+                                                    onEdit={() => console.log("Edit Category", cat)}
+                                                    onDelete={() => { setCategoryToDelete(cat); setIsDeleteModalOpen(true); }}
+                                                />
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                                {!loading && category.length === 0 && (
                                     <tr>
-
-                                        <td
-                                            colSpan={5}
-                                            className="py-10 text-center text-gray-400 italic"
-                                        >
-
+                                        <td colSpan={6} className="py-10 text-center text-gray-400 italic">
                                             No categories found.
-
                                         </td>
-
                                     </tr>
-
                                 )}
 
                             </tbody>
@@ -525,14 +595,8 @@ export default function AllUsers() {
 
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(
-                        1,
-                        Math.ceil(
-                            filteredCategories.length /
-                            rowsPerPage
-                        )
-                    )}
-                    rowsPerPage={rowsPerPage}
+                    totalPages={pagination?.total_pages || 1}
+                    rowsPerPage={pagination?.per_page || rowsPerPage}
                     onPageChange={(page) =>
                         setCurrentPage(page)
                     }
