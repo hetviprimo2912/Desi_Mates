@@ -82,7 +82,7 @@ export default function MixedChart() {
             {/* Header */}
             <div className="mb-8 px-6 pt-6 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                    <h2 className="text-[20px] font-semibold text-[#101828]">Mixed Statistics</h2>
+                    <h2 className="text-[22px] font-semibold text-[#101828]">Mixed Statistics</h2>
                     <p className="mt-0.5 text-xs text-gray-500">
                         Monthly overview of Events, Users & Subscribed Users
                     </p>
