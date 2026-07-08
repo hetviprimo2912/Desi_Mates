@@ -26,7 +26,7 @@ const sections: SettingsSection[] = [
     {
         title: "Legal & Policies",
         description: "Public-facing policy URLs shown to users",
-        accent: "border-blue-500",
+        accent: "border-l-blue-500",
         iconBg: "bg-blue-50",
         sectionIcon: <Shield size={20} className="text-blue-600" />,
         fields: [
@@ -51,7 +51,7 @@ const sections: SettingsSection[] = [
     {
         title: "API Keys & Integrations",
         description: "Third-party service credentials — keep these secret",
-        accent: "border-purple-500",
+        accent: "border-l-purple-500",
         iconBg: "bg-purple-50",
         sectionIcon: <Key size={20} className="text-purple-600" />,
         fields: [
@@ -84,7 +84,7 @@ const sections: SettingsSection[] = [
     {
         title: "App URLs",
         description: "Share links and API endpoint configuration",
-        accent: "border-emerald-500",
+        accent: "border-l-emerald-500",
         iconBg: "bg-emerald-50",
         sectionIcon: <Globe size={20} className="text-emerald-600" />,
         fields: [
@@ -171,20 +171,7 @@ export default function Settings() {
                         )}
                         {isEditing ? (
                             <>
-                                <button
-                                    onClick={handleCancel}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-colors"
-                                >
-                                    <X size={16} />
-                                    Cancel
-                                </button>
-                                <button
-                                    onClick={handleSave}
-                                    className="flex items-center gap-2 px-6 py-2.5 rounded-[10px] bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition-colors shadow-sm"
-                                >
-                                    <Save size={16} />
-                                    Save Settings
-                                </button>
+                                
                             </>
                         ) : (
                             <button
@@ -280,7 +267,7 @@ export default function Settings() {
                                 className="flex items-center gap-2 px-6 py-2 rounded-[10px] bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] shadow-sm"
                             >
                                 <Save size={15} />
-                                Save Settings
+                                Save
                             </button>
                         </div>
                     </div>

@@ -24,6 +24,9 @@ import AllReports from "./Pages/Report/AllReports";
 import ManagerList from "./Pages/EventManager/ManagerList";
 import AddManager from "./Pages/EventManager/AddManager";
 import Settings from "./Pages/Settings/Settings";
+import UserView from "./Pages/AllUsers/UserView";
+import SubscribedUserView from "./Pages/AllUsers/SubscribedUserView";
+import EventView from "./Pages/Event/EventView";
 function App() {
   return (
     <Routes>
@@ -105,7 +108,13 @@ function App() {
           <Route path="/event-manager/add-manager" element={<AddManager />} />
 
           <Route path="/settings" element={<Settings />} />
-            <Route path="/report/add-reports" element={<AllReports />} />
+          <Route path="/report/add-reports" element={<AllReports />} />
+          <Route path="/all-users/view/:id" element={<UserView />} />
+          <Route path="/sub-users/view/:id" element={<SubscribedUserView />} />
+          <Route
+            path="/event/view/:id"
+            element={<EventView />}
+          />
         </Route>
 
       </Route>

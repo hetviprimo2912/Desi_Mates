@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
     ChevronDown,
     Download,
@@ -117,6 +118,7 @@ const stats = [
     },
 ];
 export default function SubscribedUsers() {
+    const navigate = useNavigate();
 
     const [users, setUsers] =
         useState<User[]>(initialUsers);
@@ -560,12 +562,7 @@ export default function SubscribedUsers() {
                                                 showView={true}
                                                 showEdit={false}
                                                 showDelete={true}
-                                                onView={() =>
-                                                    console.log(
-                                                        "View User",
-                                                        user
-                                                    )
-                                                }
+                                                onView={() => navigate(`/sub-users/view/${user.id}`)}
                                                 onDelete={() => {
 
                                                     setUserToDelete(user);

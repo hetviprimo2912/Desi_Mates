@@ -6,6 +6,7 @@ import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
+import { useNavigate } from "react-router-dom";
 
 interface Event {
     id: number;
@@ -42,7 +43,7 @@ export default function AllEvent() {
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
     const exportRef = useRef<HTMLDivElement | null>(null);
-
+    const navigate = useNavigate();
     const filteredEvents = events.filter(event =>
         event.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
         event.organizedBy.toLowerCase().includes(searchTerm.toLowerCase())
@@ -179,7 +180,7 @@ export default function AllEvent() {
                                                 showView={true}
                                                 showEdit={true}
                                                 showDelete={true}
-                                                onView={() => console.log("View Event", event)}
+                                                onView={() => navigate(`/event/view/${event.id}`)}
                                                 onEdit={() => console.log("Edit Event", event)}
                                                 onDelete={() => { setEventToDelete(event); setIsDeleteModalOpen(true); }}
                                             />

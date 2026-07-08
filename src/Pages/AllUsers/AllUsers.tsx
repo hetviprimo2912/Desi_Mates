@@ -19,7 +19,7 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import axios from "../../lib/axiosConfiguration";
 import { useDispatch, useSelector } from "react-redux";
-
+import { useNavigate } from "react-router-dom";
 
 import { users_list } from "../../Store/slices/UsersSlice/users_list_thunk";
 
@@ -65,6 +65,7 @@ export default function AllUsers() {
     } = useSelector(
         (state: RootState) => state.users_list
     );
+    const navigate = useNavigate();
     const [searchTerm, setSearchTerm] =
         useState("");
     const [debouncedSearch, setDebouncedSearch] =
@@ -777,12 +778,7 @@ export default function AllUsers() {
                                                     showView={true}
                                                     showEdit={false}
                                                     showDelete={true}
-                                                    onView={() =>
-                                                        console.log(
-                                                            "View User",
-                                                            user
-                                                        )
-                                                    }
+                                                    onView={() => navigate(`/all-users/view/${user.id}`)}
                                                     onDelete={() => {
 
                                                         setUserToDelete(user.id);

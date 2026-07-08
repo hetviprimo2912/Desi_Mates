@@ -219,7 +219,7 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
                 </div>
 
                 <div className="flex items-center gap-6 relative">
-                    <button ref={bellRef} onClick={toggleNotif} className="relative cursor-pointer bg-white border border-gray-200 rounded-sm p-1.5 hover:bg-gray-50 transition-colors">
+                    {/* <button ref={bellRef} onClick={toggleNotif} className="relative cursor-pointer bg-white border border-gray-200 rounded-sm p-1.5 hover:bg-gray-50 transition-colors">
                         <Bell className="w-6 h-6 text-gray-600" />
                         {hasUnread && (
                             <span className="absolute -top-1 -right-1 flex h-3 w-3">
@@ -227,7 +227,7 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
                                 <span className="relative inline-flex rounded-full h-3 w-3 bg-yellow-500 border-2 border-white"></span>
                             </span>
                         )}
-                    </button>
+                    </button> */}
 
                     <div className="relative">
                         <div
@@ -235,7 +235,7 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
                             onClick={toggleProfile}
                             className="cursor-pointer hover:opacity-80 transition-opacity"
                         >
-                            <div className="w-8 h-8 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-semibold border border-gray-200">
+                            <div className="w-10 h-10 rounded-full bg-[#2563EB] flex items-center justify-center text-white font-semibold border border-gray-200">
                                 A
                             </div>
                         </div>

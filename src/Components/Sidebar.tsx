@@ -21,7 +21,6 @@ import {
 } from "lucide-react";
 import "./_theme.scss";
 
-
 interface SubMenuItem {
     name: string;
     path: string;
@@ -43,99 +42,64 @@ interface SideBarProps {
     isSearchOpen: boolean;
 }
 
-export default function SideBar({
-    isSearchOpen,
-}: SideBarProps) {
+export default function SideBar({ isSearchOpen }: SideBarProps) {
 
     const [isOpen, setIsOpen] = useState(false);
-
-    const [expandedMenu, setExpandedMenu] =
-        useState<string | null>(null);
-
+    const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
     const location = useLocation();
-
-    const activeItemRef =
-        useRef<HTMLAnchorElement | HTMLButtonElement>(null);
-
-    /*
-    -------------------------------------------------------
-    Temporary Branding
-    -------------------------------------------------------
-    */
-
-    const logo = "/logo.png";
+    const activeItemRef = useRef<HTMLAnchorElement | HTMLButtonElement>(null);
 
     const siteName = "DesiMates";
 
-    /*
-    -------------------------------------------------------
-    Menu
-    -------------------------------------------------------
-    */
-
     const menuGroups: MenuGroup[] = [
         {
-            heading: "DASHBOARD",
+            heading: "Dashboard",
             items: [
                 {
                     name: "Dashboard",
                     icon: LayoutDashboard,
                     path: "/dashboard",
                 },
+            ],
+        },
+        {
+            heading: "USER MANAGEMENT",
+            items: [
                 {
                     name: "Users",
                     icon: Users,
                     children: [
-                        {
-                            name: "All Users",
-                            path: "/all-users",
-                        },
-                        {
-                            name: "Subscribed Users",
-                            path: "/sub-users",
-                        },
+                        { name: "All Users", path: "/all-users" },
+                        { name: "Subscribed Users", path: "/sub-users" },
                     ],
                 },
+            ],
+        },
+        {
+            heading: "CONTENT",
+            items: [
                 {
                     name: "Category",
                     icon: Grid3X3,
                     children: [
-                        {
-                            name: "All Category",
-                            path: "/category/all-category",
-                        },
-                        {
-                            name: "Add Main Category",
-                            path: "/category/add-category",
-                        },
+                        { name: "All Category", path: "/category/all-category" },
+                        { name: "Add Category", path: "/category/add-category" },
                     ],
                 },
                 {
                     name: "Interest",
                     icon: Heart,
                     children: [
-                        {
-                            name: "All Interest",
-                            path: "/interest/all-interest",
-                        },
-                        {
-                            name: "Add New Interest",
-                            path: "/interest/add-interest",
-                        },
+                        { name: "All Interest", path: "/interest/all-interest" },
+                        { name: "Add Interest", path: "/interest/add-interest" },
                     ],
                 },
                 {
                     name: "Star Sign",
                     icon: Sparkles,
                     children: [
-                        {
-                            name: "All Star Sign",
-                            path: "/starsign/all-starsign",
-                        },
-                        {
-                            name: "Add New Star Sign",
-                            path: "/starsign/add-starsign",
-                        },
+                        { name: "All Star Sign", path: "/starsign/all-starsign" },
+                        { name: "Add Star Sign", path: "/starsign/add-starsign" },
                     ],
                 },
                 {
@@ -146,36 +110,17 @@ export default function SideBar({
                         { name: "Add Religion", path: "/religion/add-religion" },
                     ],
                 },
+            ],
+        },
+        {
+            heading: "EVENTS",
+            items: [
                 {
                     name: "Event",
                     icon: CalendarDays,
                     children: [
                         { name: "All Event", path: "/event/all-event" },
-                        { name: "Add Main Event", path: "/event/add-event" },
-                    ],
-                },
-                {
-                    name: "Payment List",
-                    icon: Wallet,
-                    path: "/payment/payment-list"
-                },
-                {
-                    name: "Matches",
-                    icon: Shuffle,
-                    path: "/matches/all-matches"
-                },
-                {
-                    name: "Ticket",
-                    icon: Ticket,
-                    path: "/ticket/all-tickets"
-                },
-                {
-                    name: "Report",
-                    icon: Flag,
-
-                    children: [
-                        { name: "Report List", path: "/report/all-reports" },
-                        { name: "Add Reports", path: "/report/add-reports" },
+                        { name: "Add Event", path: "/event/add-event" },
                     ],
                 },
                 {
@@ -187,91 +132,80 @@ export default function SideBar({
                     ],
                 },
                 {
+                    name: "Ticket",
+                    icon: Ticket,
+                    path: "/ticket/all-tickets",
+                },
+            ],
+        },
+        {
+            heading: "FINANCE",
+            items: [
+                {
+                    name: "Payment List",
+                    icon: Wallet,
+                    path: "/payment/payment-list",
+                },
+            ],
+        },
+        {
+            heading: "ACTIVITY",
+            items: [
+                {
+                    name: "Matches",
+                    icon: Shuffle,
+                    path: "/matches/all-matches",
+                },
+                {
+                    name: "Report",
+                    icon: Flag,
+                    children: [
+                        { name: "Report List", path: "/report/all-reports" },
+                        { name: "Add Report", path: "/report/add-reports" },
+                    ],
+                },
+            ],
+        },
+        {
+            heading: "SYSTEM",
+            items: [
+                {
                     name: "Settings",
                     icon: SettingsIcon,
                     path: "/settings",
                 },
-
             ],
         },
     ];
 
-    /*
-    -------------------------------------------------------
-    Auto Expand
-    -------------------------------------------------------
-    */
-
     useEffect(() => {
-
         menuGroups.forEach((group) => {
-
             group.items.forEach((item) => {
-
-                if (
-                    item.children?.some(
-                        (child) =>
-                            child.path ===
-                            location.pathname
-                    )
-                ) {
+                if (item.children?.some((child) => child.path === location.pathname)) {
                     setExpandedMenu(item.name);
                 }
-
             });
-
         });
-
     }, [location.pathname]);
 
-    /*
-    -------------------------------------------------------
-    Scroll Active Item
-    -------------------------------------------------------
-    */
-
     useEffect(() => {
-
         if (activeItemRef.current) {
-
-            activeItemRef.current.scrollIntoView({
-                behavior: "smooth",
-                block: "nearest",
-            });
-
+            activeItemRef.current.scrollIntoView({ behavior: "smooth", block: "nearest" });
         }
+    }, [location.pathname, expandedMenu]);
 
-    }, [
-        location.pathname,
-        expandedMenu,
-    ]);
-
-    /*
-    -------------------------------------------------------
-    Expand Collapse
-    -------------------------------------------------------
-    */
-
-    const toggleMenu = (
-        name: string
-    ) => {
-
-        setExpandedMenu((prev) =>
-            prev === name ? null : name
-        );
-
+    const toggleMenu = (name: string) => {
+        setExpandedMenu((prev) => (prev === name ? null : name));
     };
 
     return (
         <div className="sidebar-container">
-            <style>
-                {`
-                    .custom-scrollbar::-webkit-scrollbar { width: 3px; }
-                    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-                    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
-                    .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
-                `}
-            </style>
+            <style>{`
+                .custom-scrollbar::-webkit-scrollbar { width: 3px; }
+                .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+                .custom-scrollbar::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 10px; }
+                .custom-scrollbar { scrollbar-width: thin; scrollbar-color: #e5e7eb transparent; }
+            `}</style>
 
             {!isSearchOpen && (
                 <button
@@ -283,28 +217,22 @@ export default function SideBar({
             )}
 
             <div className={`fixed top-0 left-0 z-[50] w-[280px] h-screen bg-white transition-transform duration-300 ease-in-out
-                ${isOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0`}>
+                ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}>
 
                 <div className="relative h-full border-r border-gray-100 bg-white flex flex-col">
+
+                    {/* Logo */}
                     <div className="flex items-center justify-between px-6 h-[70px] shrink-0">
                         <div className="flex items-center gap-3">
-
-                            <img
-                                src="/logo/logo-icon.png"
-                                alt="DesiMates"
-                                className="w-10 h-10 object-contain"
-                            />
-
-                            <span className="text-[20px] font-bold text-[#111827]">
-                                {siteName}
-                            </span>
-
+                            <img src="/logo/logo-icon.png" alt="DesiMates" className="w-10 h-10 object-contain" />
+                            <span className="text-[20px] font-bold text-[#111827]">{siteName}</span>
                         </div>
                         <button onClick={() => setIsOpen(false)} className="lg:hidden p-2 text-gray-400 hover:text-gray-600">
                             <X size={20} />
                         </button>
                     </div>
 
+                    {/* Nav */}
                     <div className="mt-4 flex-1 overflow-y-auto custom-scrollbar pb-10">
                         <nav className="flex flex-col gap-6">
                             {menuGroups.map((group) => (
@@ -327,7 +255,7 @@ export default function SideBar({
                                                     <button
                                                         onClick={() => toggleMenu(item.name)}
                                                         className={`flex items-center justify-between w-full px-5 py-3 transition-all relative group
-                                                            ${isParentActive ? 'sidebar-active-text sidebar-active-item-bg font-semibold' : 'text-[#333333] hover:bg-gray-50'}`}
+                                                            ${isParentActive ? "sidebar-active-text sidebar-active-item-bg font-semibold" : "text-[#333333] hover:bg-gray-50"}`}
                                                     >
                                                         {isParentActive && (
                                                             <div className="absolute left-0 top-0 w-1 h-full sidebar-active-line rounded-r-xl" />
@@ -336,12 +264,12 @@ export default function SideBar({
                                                             <Icon size={20} className={isParentActive ? "sidebar-active-text" : "text-gray-500 group-hover:text-gray-700"} />
                                                             <span className="text-[15px]">{item.name}</span>
                                                         </div>
-                                                        <span className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : 'rotate-0'}`}>
+                                                        <span className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}>
                                                             {isExpanded ? <Minus size={14} /> : <Plus size={14} />}
                                                         </span>
                                                     </button>
 
-                                                    <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+                                                    <div className={`grid transition-all duration-300 ease-in-out ${isExpanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}>
                                                         <div className="overflow-hidden">
                                                             <div className="relative ml-[33px] mt-1 pl-1.5 border-l-2 border-gray-100 pb-2">
                                                                 {item.children?.map((child) => (
@@ -349,22 +277,18 @@ export default function SideBar({
                                                                         key={child.name}
                                                                         to={child.path}
                                                                         onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }}
-                                                                        className={({ isActive }) => `flex items-center justify-between w-full px-4 py-2 text-sm transition-all rounded-md relative 
-                                                                           ${isActive
-                                                                                ? 'sidebar-active-text sidebar-active-item-bg font-semibold'
-                                                                                : 'text-[#333333] hover:bg-[#f1f1f1]'}`}
+                                                                        className={({ isActive }) =>
+                                                                            `flex items-center w-full px-4 py-2 text-sm transition-all rounded-md relative
+                                                                            ${isActive ? "sidebar-active-text sidebar-active-item-bg font-semibold" : "text-[#333333] hover:bg-[#f1f1f1]"}`
+                                                                        }
                                                                     >
                                                                         {({ isActive }) => (
-                                                                            <>
-                                                                                <div className="flex items-center">
-                                                                                    {isActive && (
-                                                                                        <div className="absolute -left-[11.75px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 sidebar-active-line rounded-full border-2 border-white border-b border-gray-100" />
-                                                                                    )}
-                                                                                    <span>{child.name}</span>
-                                                                                </div>
-
-
-                                                                            </>
+                                                                            <div className="flex items-center">
+                                                                                {isActive && (
+                                                                                    <div className="absolute -left-[11.75px] top-1/2 -translate-y-1/2 w-2.5 h-2.5 sidebar-active-line rounded-full border-2 border-white" />
+                                                                                )}
+                                                                                <span>{child.name}</span>
+                                                                            </div>
                                                                         )}
                                                                     </NavLink>
                                                                 ))}
@@ -378,12 +302,12 @@ export default function SideBar({
                                         return (
                                             <NavLink
                                                 key={item.name}
-                                                to={item.path || '#'}
+                                                to={item.path || "#"}
                                                 onClick={() => { if (window.innerWidth < 1024) setIsOpen(false); }}
-                                                className={({ isActive }) => `flex items-center justify-between w-full px-6 py-3 transition-all relative group
-                                                    ${isActive
-                                                        ? 'text-[#2563EB] bg-blue-50 font-semibold'
-                                                        : 'text-gray-700 hover:bg-gray-50'}`}
+                                                className={({ isActive }) =>
+                                                    `flex items-center justify-between w-full px-6 py-3 transition-all relative group
+                                                    ${isActive ? "text-[#2563EB] bg-blue-50 font-semibold" : "text-gray-700 hover:bg-gray-50"}`
+                                                }
                                             >
                                                 {({ isActive }) => (
                                                     <>
@@ -391,14 +315,7 @@ export default function SideBar({
                                                             <div className="absolute left-0 top-0 w-1 h-full sidebar-active-line rounded-r-xl" />
                                                         )}
                                                         <div className="flex items-center gap-3">
-                                                            <Icon
-                                                                size={20}
-                                                                className={
-                                                                    isActive
-                                                                        ? "sidebar-active-text"
-                                                                        : "text-gray-500 group-hover:text-gray-700"
-                                                                }
-                                                            />
+                                                            <Icon size={20} className={isActive ? "sidebar-active-text" : "text-gray-500 group-hover:text-gray-700"} />
                                                             <span className="text-sm">{item.name}</span>
                                                         </div>
                                                     </>
@@ -414,10 +331,7 @@ export default function SideBar({
             </div>
 
             {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black/20 z-[45] lg:hidden"
-                    onClick={() => setIsOpen(false)}
-                />
+                <div className="fixed inset-0 bg-black/20 z-[45] lg:hidden" onClick={() => setIsOpen(false)} />
             )}
         </div>
     );

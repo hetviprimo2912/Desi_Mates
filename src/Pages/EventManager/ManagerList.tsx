@@ -166,10 +166,10 @@ export default function ManagerList() {
                                         </td>
                                         <td className="px-4 py-5 text-center whitespace-nowrap">
                                             <Action
-                                                showView={true}
+                                                showView={false}
                                                 showEdit={true}
                                                 showDelete={true}
-                                                onView={() => console.log("View Manager", manager)}
+                                             
                                                 onEdit={() => console.log("Edit Manager", manager)}
                                                 onDelete={() => setManagerToDelete(manager.id)}
                                             />
