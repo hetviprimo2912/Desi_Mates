@@ -1,4 +1,6 @@
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import {
     ArrowLeft, User, Mail, Phone, MapPin, Calendar,
     Briefcase, Heart, Globe, Star, GraduationCap,
@@ -6,82 +8,13 @@ import {
     Ticket, ThumbsUp, Crown, Info,
 } from "lucide-react";
 import Tags from "../../Components/Tags";
+import type {
+    AppDispatch,
+    RootState,
+} from "../../Store/store";
 
-interface UserDetails {
-    userName: string;
-    dateOfBirth: string;
-    contactNumber: string;
-    email: string;
-    location: string;
-    approved: boolean;
-    selfieImage: string;
-    userLikeCount: number;
-    totalTicketPurchase: number;
-    userMode: string;
-    bio: string;
-    gender: string;
-    age: string;
-    languages: string;
-    interest: string;
-    religion: string;
-    work: string;
-    height: string;
-    education: string;
-    exercise: string;
-    starSign: string;
-    educationLevel: string;
-    marriedStatus: string;
-    annualIncome: string;
-    companyName: string;
-    dietPlan: string;
-    smoking: string;
-    drinking: string;
-    haveChildren: string;
-    moreChildren: string;
-    relationStatus: string;
-    city: string;
-    state: string;
-    country: string;
-    wantDate: string;
-}
+import { user_profile } from "../../Store/slices/UsersSlice/user_profile_thunk";
 
-const user: UserDetails = {
-    userName: "John Doe",
-    dateOfBirth: "18 May 1998",
-    contactNumber: "+44 7884169444",
-    email: "john.doe@gmail.com",
-    location: "London",
-    approved: false,
-    selfieImage: "",
-    userLikeCount: 0,
-    totalTicketPurchase: 0,
-    userMode: "Free User",
-    bio: "Lorem ipsum dolor sit amet, consectetur adipiscing elit.",
-    gender: "Male",
-    age: "27",
-    languages: "English",
-    interest: "Travel",
-    religion: "Christian",
-    work: "Software Engineer",
-    height: "178 cm",
-    education: "B.Tech",
-    exercise: "Gym",
-    starSign: "Leo",
-    educationLevel: "Graduate",
-    marriedStatus: "Single",
-    annualIncome: "$50,000",
-    companyName: "Google",
-    dietPlan: "Vegetarian",
-    smoking: "No",
-    drinking: "Occasionally",
-    haveChildren: "No",
-    moreChildren: "No",
-    relationStatus: "Single",
-    city: "London",
-    state: "England",
-    country: "United Kingdom",
-    wantDate: "Friendship",
-};
 
 interface FieldProps {
     icon?: React.ReactNode;
@@ -95,7 +28,9 @@ function Field({ icon, label, value }: FieldProps) {
             <span className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">{label}</span>
             <div className="flex items-center gap-2 min-h-[36px]">
                 {icon && <span className="text-gray-400 shrink-0">{icon}</span>}
-                <span className="text-[14px] text-[#111827] font-medium">{value || "—"}</span>
+                <span className="text-[14px] text-[#111827] font-medium">
+                    {value ?? "N/A"}
+                </span>
             </div>
         </div>
     );
@@ -127,9 +62,178 @@ function Section({ title, accent, iconBg, sectionIcon, children }: SectionProps)
 
 export default function UserView() {
     const navigate = useNavigate();
+    const dispatch = useDispatch<AppDispatch>();
 
-    const initials = user.userName.split(" ").map(n => n[0]).join("").toUpperCase();
+    const { id } = useParams();
 
+    const {
+        user,
+        about,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.user_profile
+    );
+    const initials =
+        user?.name
+            ?.split(" ")
+            .map((word) => word[0])
+            .join("")
+            .toUpperCase() || "N/A";
+    const formatDate = (
+        date?: string
+    ) => {
+
+        if (!date) return "N/A";
+
+        return new Date(date).toLocaleDateString(
+            "en-GB",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+            }
+        );
+
+    };
+    const selectedInterests =
+        user?.interest
+            ?.filter(
+                (item) =>
+                    item.is_selected === "1"
+            )
+            .map(
+                (item) => item.name
+            )
+            .join(", ") || "N/A";
+    const languages =
+        user?.languages?.length
+            ? user.languages.join(", ")
+            : "N/A";
+    const wantDate =
+        user?.want_date?.length
+            ? user.want_date.join(", ")
+            : "N/A";
+    const haveChildren =
+        user?.have_children === "1"
+            ? "Yes"
+            : user?.have_children === "0"
+                ? "No"
+                : "N/A";
+    void about;
+    useEffect(() => {
+
+        if (!id) return;
+
+        dispatch(
+            user_profile({
+                user_id: Number(id),
+            })
+        );
+
+    }, [dispatch, id]);
+    if (loading) {
+        return (
+            <div className="w-full min-h-screen bg-gray-50 px-4 sm:px-8 pt-6 pb-16 animate-pulse">
+
+                {/* Header */}
+                <div className="flex justify-between items-center mb-8">
+                    <div>
+                        <div className="h-8 w-52 rounded bg-gray-200 mb-3" />
+                        <div className="h-4 w-40 rounded bg-gray-100" />
+                    </div>
+
+                    <div className="h-11 w-36 rounded-lg bg-gray-200" />
+                </div>
+
+                {/* Hero Card */}
+                <div className="bg-white rounded-xl border border-gray-200 p-8 mb-6">
+                    <div className="flex gap-8">
+
+                        <div className="flex flex-col items-center w-56">
+
+                            <div className="w-24 h-24 rounded-full bg-gray-200" />
+
+                            <div className="h-5 w-32 rounded bg-gray-200 mt-5" />
+
+                            <div className="h-4 w-40 rounded bg-gray-100 mt-3" />
+
+                            <div className="flex gap-2 mt-5">
+                                <div className="h-6 w-24 rounded-full bg-gray-200" />
+                                <div className="h-6 w-24 rounded-full bg-gray-200" />
+                            </div>
+
+                        </div>
+
+                        <div className="flex-1">
+
+                            <div className="h-8 w-56 rounded bg-gray-200 mb-5" />
+
+                            <div className="flex gap-3 mb-5">
+
+                                <div className="h-6 w-20 rounded-full bg-gray-200" />
+
+                                <div className="h-6 w-20 rounded-full bg-gray-200" />
+
+                                <div className="h-6 w-24 rounded-full bg-gray-200" />
+
+                            </div>
+
+                            <div className="h-4 w-full rounded bg-gray-100 mb-2" />
+
+                            <div className="h-4 w-5/6 rounded bg-gray-100 mb-8" />
+
+                            <div className="grid grid-cols-4 gap-4">
+
+                                {[...Array(4)].map((_, index) => (
+
+                                    <div
+                                        key={index}
+                                        className="h-20 rounded-xl bg-gray-100"
+                                    />
+
+                                ))}
+
+                            </div>
+
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* Sections */}
+
+                {[...Array(5)].map((_, section) => (
+
+                    <div
+                        key={section}
+                        className="bg-white rounded-xl border border-gray-200 p-6 mb-6"
+                    >
+
+                        <div className="h-6 w-52 rounded bg-gray-200 mb-8" />
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+                            {[...Array(6)].map((_, item) => (
+
+                                <div key={item}>
+
+                                    <div className="h-3 w-20 rounded bg-gray-100 mb-3" />
+
+                                    <div className="h-5 w-40 rounded bg-gray-200" />
+
+                                </div>
+
+                            ))}
+
+                        </div>
+
+                    </div>
+
+                ))}
+
+            </div>
+        );
+    }
     return (
         <div className="w-full min-h-screen bg-gray-50 text-[#111827]">
             <div className="px-4 sm:px-8 pt-6 pb-16 space-y-6">
@@ -168,26 +272,32 @@ export default function UserView() {
 
                             {/* Avatar */}
                             <div className="relative z-10 w-20 h-20 rounded-full ring-4 ring-white bg-gradient-to-br from-blue-400 to-indigo-500 flex items-center justify-center text-white text-2xl font-bold shadow-md shrink-0">
-                                {user.selfieImage
-                                    ? <img src={user.selfieImage} alt={user.userName} className="w-full h-full object-cover rounded-full" />
-                                    : initials
-                                }
+                                {user?.profile_pic ? (
+                                    <img
+                                        src={user.profile_pic}
+                                        alt={user.name || "User"}
+                                        className="w-full h-full object-cover rounded-full"
+                                    />
+                                ) : (
+                                    initials
+                                )}
                             </div>
 
-                            <h2 className="relative z-10 mt-3 text-[16px] font-bold text-[#1e3a5f] text-center leading-tight">{user.userName}</h2>
-                            <p className="relative z-10 mt-1 text-[11.5px] text-blue-600 text-center break-all">{user.email}</p>
+                            <h2 className="relative z-10 mt-3 text-[16px] font-bold text-[#1e3a5f] text-center leading-tight">{user?.name || "N/A"}</h2>
+                            <p className="relative z-10 mt-1 text-[11.5px] text-blue-600 text-center break-all">{user?.email || "N/A"}</p>
 
                             {/* Badges */}
                             <div className="relative z-10 mt-4 flex flex-wrap justify-center gap-1.5">
-                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${
-                                    user.approved
-                                        ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                                        : "bg-red-50 text-red-500 border-red-200"
-                                }`}>
-                                    {user.approved ? "✓ Verified" : "✗ Not Verified"}
+                                <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${user?.approved === 1
+                                    ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                                    : "bg-red-50 text-red-500 border-red-200"
+                                    }`}>
+                                    {user?.approved === 1
+                                        ? "✓ Verified"
+                                        : "✗ Not Verified"}
                                 </span>
                                 <span className="px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-blue-600 border border-blue-200">
-                                    {user.userMode}
+                                    {user?.plan_name || "Free User"}
                                 </span>
                             </div>
                         </div>
@@ -198,33 +308,64 @@ export default function UserView() {
                             {/* Top row: name + gender + contact */}
                             <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
                                 <div>
-                                    <h2 className="text-[22px] font-bold text-[#101828]">{user.userName}</h2>
+                                    <h2 className="text-[22px] font-bold text-[#101828]">{user?.name || "N/A"}</h2>
                                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
-                                        <Tags text={user.gender} variant="gray" />
-                                        <Tags text={`${user.age} yrs`} variant="blue" />
-                                        <Tags text={user.relationStatus} variant="purple" />
+                                        <Tags
+                                            text={user?.gender || "N/A"}
+                                            variant="gray"
+                                        />
+                                        <Tags
+                                            text={
+                                                user?.age
+                                                    ? `${user.age} yrs`
+                                                    : "N/A"
+                                            }
+                                            variant="blue"
+                                        />
+                                        <Tags
+                                            text={user?.relation_status || "N/A"}
+                                            variant="purple"
+                                        />
                                     </div>
                                 </div>
                                 <div className="text-right shrink-0">
-                                    <p className="text-[13px] text-gray-400">{user.contactNumber}</p>
-                                    <p className="text-[13px] text-gray-400 mt-0.5">{user.city}, {user.country}</p>
+                                    <p className="text-[13px] text-gray-400">{user?.phone || "N/A"}</p>
+                                    <p className="text-[13px] text-gray-400 mt-0.5">{user?.city || "N/A"}, {user?.country || "N/A"}</p>
                                 </div>
                             </div>
 
                             {/* Bio */}
-                            {user.bio && (
-                                <p className="text-[13.5px] text-gray-500 leading-relaxed border-l-2 border-blue-200 pl-3 italic">
-                                    "{user.bio}"
-                                </p>
-                            )}
+                            <p className="text-[13.5px] text-gray-500 leading-relaxed border-l-2 border-blue-200 pl-3 italic">
+                                {user?.bio || "N/A"}
+                            </p>
 
                             {/* Stats row */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
                                 {[
-                                    { icon: <ThumbsUp size={15} className="text-pink-500" />, bg: "bg-pink-50", label: "Likes", value: user.userLikeCount },
-                                    { icon: <Ticket size={15} className="text-blue-500" />, bg: "bg-blue-50", label: "Tickets", value: user.totalTicketPurchase },
-                                    { icon: <Crown size={15} className="text-amber-500" />, bg: "bg-amber-50", label: "Plan", value: user.userMode },
-                                    { icon: <MapPin size={15} className="text-emerald-500" />, bg: "bg-emerald-50", label: "Location", value: `${user.city}, ${user.country}` },
+                                    {
+                                        icon: <ThumbsUp size={15} className="text-pink-500" />,
+                                        bg: "bg-pink-50",
+                                        label: "Likes",
+                                        value: "N/A",
+                                    },
+                                    {
+                                        icon: <Ticket size={15} className="text-blue-500" />,
+                                        bg: "bg-blue-50",
+                                        label: "Tickets",
+                                        value: "N/A",
+                                    },
+                                    {
+                                        icon: <Crown size={15} className="text-amber-500" />,
+                                        bg: "bg-amber-50",
+                                        label: "Plan",
+                                        value: user?.user_plan || "Free User",
+                                    },
+                                    {
+                                        icon: <MapPin size={15} className="text-emerald-500" />,
+                                        bg: "bg-emerald-50",
+                                        label: "Location",
+                                        value: user?.location || "N/A",
+                                    },
                                 ].map(stat => (
                                     <div key={stat.label} className="flex items-center gap-2.5 bg-gray-50 rounded-[10px] px-3 py-2.5">
                                         <div className={`w-8 h-8 rounded-[8px] ${stat.bg} flex items-center justify-center shrink-0`}>
@@ -248,12 +389,41 @@ export default function UserView() {
                     iconBg="bg-blue-50"
                     sectionIcon={<User size={16} className="text-blue-600" />}
                 >
-                    <Field icon={<User size={15} />} label="Username" value={user.userName} />
-                    <Field icon={<Mail size={15} />} label="Email Address" value={user.email} />
-                    <Field icon={<Phone size={15} />} label="Contact Number" value={user.contactNumber} />
-                    <Field icon={<Calendar size={15} />} label="Date of Birth" value={user.dateOfBirth} />
-                    <Field icon={<Info size={15} />} label="Age" value={`${user.age} years`} />
-                    <Field icon={<User size={15} />} label="Gender" value={user.gender} />
+                    <Field
+                        icon={<User size={15} />}
+                        label="Username"
+                        value={user?.name || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Mail size={15} />}
+                        label="Email Address"
+                        value={user?.email || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Phone size={15} />}
+                        label="Contact Number"
+                        value={user?.phone || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Calendar size={15} />}
+                        label="Date of Birth"
+                        value={formatDate(user?.dob)}
+                    />
+
+                    <Field
+                        icon={<Info size={15} />}
+                        label="Age"
+                        value={user?.age ? `${user.age} years` : "N/A"}
+                    />
+
+                    <Field
+                        icon={<User size={15} />}
+                        label="Gender"
+                        value={user?.gender || "N/A"}
+                    />
                 </Section>
 
                 {/* Section: Location */}
@@ -263,10 +433,29 @@ export default function UserView() {
                     iconBg="bg-l-emerald-50"
                     sectionIcon={<MapPin size={16} className="text-emerald-600" />}
                 >
-                    <Field icon={<MapPin size={15} />} label="City" value={user.city} />
-                    <Field icon={<MapPin size={15} />} label="State" value={user.state} />
-                    <Field icon={<Globe size={15} />} label="Country" value={user.country} />
-                    <Field icon={<MapPin size={15} />} label="Location" value={user.location} />
+                    <Field
+                        icon={<MapPin size={15} />}
+                        label="City"
+                        value={user?.city || "N/A"}
+                    />
+
+                    <Field
+                        icon={<MapPin size={15} />}
+                        label="State"
+                        value={user?.state || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Globe size={15} />}
+                        label="Country"
+                        value={user?.country || "N/A"}
+                    />
+
+                    <Field
+                        icon={<MapPin size={15} />}
+                        label="Location"
+                        value={user?.location || "N/A"}
+                    />
                 </Section>
 
                 {/* Section: Professional */}
@@ -276,12 +465,41 @@ export default function UserView() {
                     iconBg="bg-purple-50"
                     sectionIcon={<Briefcase size={16} className="text-purple-600" />}
                 >
-                    <Field icon={<Briefcase size={15} />} label="Work" value={user.work} />
-                    <Field icon={<Briefcase size={15} />} label="Company" value={user.companyName} />
-                    <Field icon={<GraduationCap size={15} />} label="Education" value={user.education} />
-                    <Field icon={<GraduationCap size={15} />} label="Education Level" value={user.educationLevel} />
-                    <Field icon={<DollarSign size={15} />} label="Annual Income" value={user.annualIncome} />
-                    <Field icon={<Globe size={15} />} label="Languages" value={user.languages} />
+                    <Field
+                        icon={<Briefcase size={15} />}
+                        label="Work"
+                        value={user?.work || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Briefcase size={15} />}
+                        label="Company"
+                        value={user?.company_name || "N/A"}
+                    />
+
+                    <Field
+                        icon={<GraduationCap size={15} />}
+                        label="Education"
+                        value={user?.education || "N/A"}
+                    />
+
+                    <Field
+                        icon={<GraduationCap size={15} />}
+                        label="Education Level"
+                        value={user?.education_leval || "N/A"}
+                    />
+
+                    <Field
+                        icon={<DollarSign size={15} />}
+                        label="Annual Income"
+                        value={user?.annual_income || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Globe size={15} />}
+                        label="Languages"
+                        value={languages}
+                    />
                 </Section>
 
                 {/* Section: Lifestyle */}
@@ -291,14 +509,53 @@ export default function UserView() {
                     iconBg="bg-rose-50"
                     sectionIcon={<Heart size={16} className="text-rose-600" />}
                 >
-                    <Field icon={<Heart size={15} />} label="Interest" value={user.interest} />
-                    <Field icon={<Heart size={15} />} label="Religion" value={user.religion} />
-                    <Field icon={<Star size={15} />} label="Star Sign" value={user.starSign} />
-                    <Field icon={<Dumbbell size={15} />} label="Exercise" value={user.exercise} />
-                    <Field icon={<Info size={15} />} label="Diet Plan" value={user.dietPlan} />
-                    <Field icon={<Info size={15} />} label="Height" value={user.height} />
-                    <Field icon={<Cigarette size={15} />} label="Smoking" value={user.smoking} />
-                    <Field icon={<Wine size={15} />} label="Drinking" value={user.drinking} />
+                    <Field
+                        icon={<Heart size={15} />}
+                        label="Interest"
+                        value={selectedInterests}
+                    />
+
+                    <Field
+                        icon={<Heart size={15} />}
+                        label="Religion"
+                        value={user?.religion || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Star size={15} />}
+                        label="Star Sign"
+                        value={user?.star_sign || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Dumbbell size={15} />}
+                        label="Exercise"
+                        value={user?.exercise || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Info size={15} />}
+                        label="Diet Plan"
+                        value={user?.diet_plan || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Info size={15} />}
+                        label="Height"
+                        value={user?.height || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Cigarette size={15} />}
+                        label="Smoking"
+                        value={user?.smoking || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Wine size={15} />}
+                        label="Drinking"
+                        value={user?.drinking || "N/A"}
+                    />
                 </Section>
 
                 {/* Section: Relationship */}
@@ -308,11 +565,35 @@ export default function UserView() {
                     iconBg="bg-amber-50"
                     sectionIcon={<Heart size={16} className="text-amber-600" />}
                 >
-                    <Field icon={<Heart size={15} />} label="Relation Status" value={user.relationStatus} />
-                    <Field icon={<Heart size={15} />} label="Married Status" value={user.marriedStatus} />
-                    <Field icon={<Baby size={15} />} label="Have Children" value={user.haveChildren} />
-                    <Field icon={<Baby size={15} />} label="Want More Children" value={user.moreChildren} />
-                    <Field icon={<Heart size={15} />} label="Looking For" value={user.wantDate} />
+                    <Field
+                        icon={<Heart size={15} />}
+                        label="Relation Status"
+                        value={user?.relation_status || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Heart size={15} />}
+                        label="Married Status"
+                        value={user?.married_status || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Baby size={15} />}
+                        label="Have Children"
+                        value={haveChildren}
+                    />
+
+                    <Field
+                        icon={<Baby size={15} />}
+                        label="Want More Children"
+                        value={user?.more_children || "N/A"}
+                    />
+
+                    <Field
+                        icon={<Heart size={15} />}
+                        label="Looking For"
+                        value={wantDate}
+                    />
                 </Section>
 
             </div>

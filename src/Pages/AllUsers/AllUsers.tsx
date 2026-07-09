@@ -20,41 +20,12 @@ import autoTable from "jspdf-autotable";
 import axios from "../../lib/axiosConfiguration";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
-
+import { user_cards } from "../../Store/slices/UsersSlice/user_cards_thunk";
 import { users_list } from "../../Store/slices/UsersSlice/users_list_thunk";
-
+import { user_delete } from "../../Store/slices/UsersSlice/user_delete_thunk";
 import type { RootState, AppDispatch } from "../../Store/store";
 
-const stats = [
-    {
-        label: "Total Users",
-        value: 1250,
-        icon: <Users size={24} className="text-blue-600" />,
-        bg: "bg-blue-50",
-        change: "+12.5% this month",
-    },
-    {
-        label: "Approved Users",
-        value: 980,
-        icon: <UserCheck size={24} className="text-green-600" />,
-        bg: "bg-green-50",
-        change: "+8.2% this month",
-    },
-    {
-        label: "Subscribed Users",
-        value: 310,
-        icon: <Crown size={24} className="text-orange-600" />,
-        bg: "bg-orange-50",
-        change: "+15.4% this month",
-    },
-    {
-        label: "Online Users",
-        value: 940,
-        icon: <Heart size={24} className="text-purple-600" />,
-        bg: "bg-purple-50",
-        change: "+4.3% this month",
-    },
-];
+
 export default function AllUsers() {
 
     const dispatch = useDispatch<AppDispatch>();
@@ -64,6 +35,13 @@ export default function AllUsers() {
         loading,
     } = useSelector(
         (state: RootState) => state.users_list
+    );
+
+    const {
+        cards,
+        loading: cardsLoading,
+    } = useSelector(
+        (state: RootState) => state.user_cards
     );
     const navigate = useNavigate();
     const [searchTerm, setSearchTerm] =
@@ -135,6 +113,13 @@ export default function AllUsers() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
     useEffect(() => {
+
+        dispatch(
+            user_cards()
+        );
+
+    }, [dispatch]);
+    useEffect(() => {
         dispatch(
             users_list({
                 search: debouncedSearch,
@@ -204,17 +189,37 @@ export default function AllUsers() {
         ) && !isAllSelected;
 
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
 
         if (!userToDelete) return;
 
+        try {
 
-        setSelectedUsers(new Set());
+            await dispatch(
+                user_delete({
+                    user_id: userToDelete,
+                })
+            ).unwrap();
 
-        setUserToDelete(null);
+            dispatch(
+                users_list({
+                    search: debouncedSearch,
+                    page_no: currentPage,
+                    per_page: rowsPerPage,
+                })
+            );
 
-        setIsDeleteModalOpen(false);
+            dispatch(user_cards());
 
+            setSelectedUsers(new Set());
+
+            setUserToDelete(null);
+
+            setIsDeleteModalOpen(false);
+
+        } catch (error) {
+            console.error(error);
+        }
     };
     const formatDate = (date: string) =>
         new Date(date).toLocaleDateString("en-US", {
@@ -378,6 +383,41 @@ export default function AllUsers() {
 
         window.URL.revokeObjectURL(url);
     };
+    const stats = [
+
+        {
+            label: "Total Users",
+            value: cards?.total_users ?? 0,
+            icon: <Users size={24} className="text-blue-600" />,
+            bg: "bg-blue-50",
+            change: "",
+        },
+
+        {
+            label: "Approved Users",
+            value: cards?.approved_users ?? 0,
+            icon: <UserCheck size={24} className="text-green-600" />,
+            bg: "bg-green-50",
+            change: "",
+        },
+
+        {
+            label: "Subscribed Users",
+            value: cards?.subscriber_users ?? 0,
+            icon: <Crown size={24} className="text-orange-600" />,
+            bg: "bg-orange-50",
+            change: "",
+        },
+
+        {
+            label: "Online Users",
+            value: cards?.online_users ?? 0,
+            icon: <Heart size={24} className="text-purple-600" />,
+            bg: "bg-purple-50",
+            change: "",
+        },
+
+    ];
     return (
 
         <div className="w-full min-h-screen text-[#111827]">
@@ -485,8 +525,7 @@ export default function AllUsers() {
                     </div>
 
                 </div>
-                {loading ? (
-
+                {cardsLoading ? (
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
 
                         {[...Array(4)].map((_, index) => (

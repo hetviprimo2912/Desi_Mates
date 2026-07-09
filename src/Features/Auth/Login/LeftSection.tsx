@@ -18,12 +18,12 @@ const features = [
       "Track growth, engagement and analytics with real-time insights.",
     icon: <ChartBarIcon className="w-6 h-6 text-[#2563EB]" />,
   },
-  {
-    title: "Secure & Reliable",
-    description:
-      "Enterprise-grade security to protect your data and platform.",
-    icon: <ShieldCheckIcon className="w-6 h-6 text-[#2563EB]" />,
-  },
+  // {
+  //   title: "Secure & Reliable",
+  //   description:
+  //     "Enterprise-grade security to protect your data and platform.",
+  //   icon: <ShieldCheckIcon className="w-6 h-6 text-[#2563EB]" />,
+  // },
 ];
 
 const LeftSection = () => {

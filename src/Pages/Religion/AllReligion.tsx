@@ -17,71 +17,14 @@ import Tags from "../../Components/Tags";
 import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../Store/store";
+import type {
+    ReligionItem,
+} from "../../Types/ReligionTypes/religion_list_types";
 
+import { religion_list } from "../../Store/slices/ReligionSlices/religion_list_thunk";
 
-interface Religion {
-    id: number;
-    image: string;
-    name: string;
-    description: string;
-}
-
-const initialReligions: Religion[] = [
-    {
-        id: 1,
-        image: "https://picsum.photos/80?101",
-        name: "Hindu",
-        description: "Followers of Hinduism",
-    },
-    {
-        id: 2,
-        image: "https://picsum.photos/80?102",
-        name: "Muslim",
-        description: "Followers of Islam",
-    },
-    {
-        id: 3,
-        image: "https://picsum.photos/80?103",
-        name: "Christian",
-        description: "Followers of Christianity",
-    },
-    {
-        id: 4,
-        image: "https://picsum.photos/80?104",
-        name: "Sikh",
-        description: "Followers of Sikhism",
-    },
-    {
-        id: 5,
-        image: "https://picsum.photos/80?105",
-        name: "Jain",
-        description: "Followers of Jainism",
-    },
-    {
-        id: 6,
-        image: "https://picsum.photos/80?106",
-        name: "Buddhist",
-        description: "Followers of Buddhism",
-    },
-    {
-        id: 7,
-        image: "https://picsum.photos/80?107",
-        name: "Jewish",
-        description: "Followers of Judaism",
-    },
-    {
-        id: 8,
-        image: "https://picsum.photos/80?108",
-        name: "Catholic",
-        description: "Catholic denomination",
-    },
-    {
-        id: 9,
-        image: "https://picsum.photos/80?109",
-        name: "Other",
-        description: "Other religions",
-    },
-];
 const religionStats = [
     {
         label: "Total Religions",
@@ -114,17 +57,56 @@ const religionStats = [
 ];
 export default function AllUsers() {
 
-    const [religions, setReligions] =
-        useState<Religion[]>(initialReligions);
+    const dispatch = useDispatch<AppDispatch>();
+
+    const {
+        religion,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.religion_list
+    );
 
     const [searchTerm, setSearchTerm] =
         useState("");
-
+    const [debouncedSearch, setDebouncedSearch] =
+        useState("");
     const [rowsPerPage, setRowsPerPage] =
         useState(10);
 
     const [currentPage, setCurrentPage] =
         useState(1);
+
+    useEffect(() => {
+
+        const timer = setTimeout(() => {
+
+            setDebouncedSearch(searchTerm);
+
+            setCurrentPage(1);
+
+        }, 1000);
+
+        return () => clearTimeout(timer);
+
+    }, [searchTerm]);
+    useEffect(() => {
+
+        dispatch(
+            religion_list({
+                search: debouncedSearch,
+                page_no: currentPage,
+                per_page: rowsPerPage,
+            })
+        );
+
+    }, [
+        dispatch,
+        debouncedSearch,
+        currentPage,
+        rowsPerPage,
+    ]);
+
 
     const [selectedReligions, setSelectedReligions] =
         useState<Set<number>>(new Set());
@@ -136,25 +118,10 @@ export default function AllUsers() {
         useState(false);
 
     const [categoryToDelete, setCategoryToDelete] =
-        useState<Religion | null>(null);
-
+        useState<ReligionItem | null>(null);
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-    const filteredReligions =
-        religions.filter(category =>
-            category.name
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-        );
-    const startIndex =
-        (currentPage - 1) * rowsPerPage;
-
-    const paginatedReligions =
-        filteredReligions.slice(
-            startIndex,
-            startIndex + rowsPerPage
-        );
     useEffect(() => {
 
         function handleClickOutside(
@@ -184,11 +151,7 @@ export default function AllUsers() {
             );
 
     }, []);
-    useEffect(() => {
 
-        setCurrentPage(1);
-
-    }, [searchTerm]);
     const handleSelectAll = (
         checked: boolean
     ) => {
@@ -197,7 +160,7 @@ export default function AllUsers() {
 
             setSelectedReligions(
                 new Set(
-                    paginatedReligions.map((_, index) => index)
+                    religion.map((item) => Number(item.id))
                 )
             );
 
@@ -212,48 +175,32 @@ export default function AllUsers() {
     };
 
     const handleSelectUser = (
-        index: number,
+        id: number,
         checked: boolean
     ) => {
 
-        const updated =
-            new Set(selectedReligions);
+        const updated = new Set(selectedReligions);
 
         if (checked) {
-
-            updated.add(index);
-
+            updated.add(id);
         } else {
-
-            updated.delete(index);
-
+            updated.delete(id);
         }
 
         setSelectedReligions(updated);
-
     };
-
     const isAllSelected =
-        paginatedReligions.length > 0 &&
-        filteredReligions.every((_, index) =>
-            selectedReligions.has(index)
+        religion.length > 0 &&
+        religion.every((item) =>
+            selectedReligions.has(Number(item.id))
         );
 
     const isIndeterminate =
-        paginatedReligions.some((_, index) =>
-            selectedReligions.has(index)
+        religion.some((item) =>
+            selectedReligions.has(Number(item.id))
         ) && !isAllSelected;
 
     const handleDelete = () => {
-
-        if (!categoryToDelete) return;
-
-        setReligions(prev =>
-            prev.filter(
-                category =>
-                    category.id !== categoryToDelete.id
-            )
-        );
 
         setSelectedReligions(new Set());
 
@@ -343,7 +290,7 @@ export default function AllUsers() {
                                     <button
                                         onClick={() => {
 
-                                            console.table(filteredReligions);
+                                            console.table(religion);
 
                                             setIsExportOpen(false);
 
@@ -365,7 +312,48 @@ export default function AllUsers() {
 
                 </div>
                 {/* Stats Cards */}
-                <StatsCard stats={religionStats} />
+                {/* Stats Cards */}
+
+                {loading ? (
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+
+                        {[...Array(4)].map((_, index) => (
+
+                            <div
+                                key={index}
+                                className="bg-white border border-gray-200 rounded-xl p-6"
+                            >
+
+                                <div className="flex items-center gap-4">
+
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+
+                                    <div className="flex-1">
+
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+
+                                    </div>
+
+                                </div>
+
+                            </div>
+
+                        ))}
+
+                    </div>
+
+                ) : (
+
+                    <StatsCard
+                        stats={religionStats}
+                    />
+
+                )}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
                     <div className="w-full overflow-x-auto">
 
@@ -374,18 +362,13 @@ export default function AllUsers() {
                             <TableHeader
                                 columns={[
                                     {
-                                        label: "Image",
-                                        width: "180px",
+                                        label: "Religion Name",
+                                        width: "320px",
                                     },
                                     {
-                                        label: "Sign Name",
-                                        width: "260px",
+                                        label: "Description",
+                                        width: "650px",
                                     },
-                                    {
-                                        label: "Sign Description",
-                                        width: "520px",
-                                    },
-
                                     {
                                         label: "Action",
                                         width: "180px",
@@ -398,95 +381,139 @@ export default function AllUsers() {
                             />
 
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedReligions.map((category, idx) => (
 
-                                    <tr
+                                {loading ? (
 
-                                        className="hover:bg-gray-50 transition-colors"
-                                    >
+                                    [...Array(rowsPerPage)].map((_, index) => (
 
-                                        {/* Checkbox */}
-
-                                        <td className="pl-8 px-4 py-4">
-
-                                            <input
-                                                type="checkbox"
-                                                checked={selectedReligions.has(idx)}
-                                                onChange={(e) =>
-                                                    handleSelectUser(
-                                                        idx,
-                                                        e.target.checked
-                                                    )
-                                                }
-                                                className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
-                                            />
-
-                                        </td>
-                                        <td
-                                            className="pl-22 px-6 py-5 whitespace-nowrap"
-                                        >
-                                            <img
-                                                src={category.image}
-                                                alt={category.name}
-                                                className="w-12 h-12 rounded-lg object-cover border border-gray-200"
-                                            />
-                                        </td>
-                                        <td
-                                            className="pl-36 px-6 py-5 whitespace-nowrap"
-
+                                        <tr
+                                            key={index}
+                                            className="animate-pulse"
                                         >
 
-                                            <p className="text-[15px] font-medium text-[#111827]">
-                                                {category.name}
-                                            </p>
+                                            {/* Checkbox */}
 
-                                        </td>
-                                        <td
-                                            className="pl-70 px-6 py-5"
+                                            <td className="px-4 py-5">
 
+                                                <div className="h-4 w-4 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Religion Name */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="h-4 w-32 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Description */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="h-4 w-56 rounded bg-gray-200" />
+
+                                            </td>
+
+                                            {/* Action */}
+
+                                            <td className="px-4 py-5">
+
+                                                <div className="flex justify-center">
+
+                                                    <div className="h-8 w-16 rounded bg-gray-200" />
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+
+                                ) : religion.length > 0 ? (
+
+                                    religion.map((item) => (
+
+                                        <tr
+                                            key={item.id}
+                                            className="hover:bg-gray-50 transition-colors"
                                         >
 
-                                            <p className="text-[14px] text-gray-600 break-words">
-                                                {category.description}
-                                            </p>
+                                            {/* Checkbox */}
 
-                                        </td>
+                                            <td className="pl-8 px-4 py-4">
 
-                                        {/* Action */}
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedReligions.has(Number(item.id))}
+                                                    onChange={(e) =>
+                                                        handleSelectUser(
+                                                            Number(item.id),
+                                                            e.target.checked
+                                                        )
+                                                    }
+                                                    className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
+                                                />
 
-                                        <td
-                                            className="px-4 py-5 text-center whitespace-nowrap"
+                                            </td>
 
-                                        >
+                                            {/* Religion Name */}
 
-                                            <Action
-                                                showView={false}
-                                                showEdit={true}
-                                                showDelete={true}
-                                                onEdit={() =>
-                                                    console.log("Edit Category", category)
-                                                }
-                                                onDelete={() => {
+                                            <td className="pl-44 px-6 py-5 whitespace-nowrap">
 
-                                                    setCategoryToDelete(category);
+                                                <p className="text-[15px] font-medium text-[#111827]">
 
-                                                    setIsDeleteModalOpen(true);
+                                                    {item.name || "N/A"}
 
-                                                }}
-                                            />
+                                                </p>
 
-                                        </td>
+                                            </td>
 
-                                    </tr>
+                                            {/* Description */}
 
-                                ))}
+                                            <td className="pl-90 px-6 py-5">
 
-                                {filteredReligions.length === 0 && (
+                                                <p className="text-[14px] text-gray-600 break-words">
+
+                                                    {item.description?.trim() || "N/A"}
+
+                                                </p>
+
+                                            </td>
+
+                                            {/* Action */}
+
+                                            <td className="px-4 py-5 text-center whitespace-nowrap">
+
+                                                <Action
+                                                    showView={false}
+                                                    showEdit={true}
+                                                    showDelete={true}
+                                                    onEdit={() =>
+                                                        console.log("Edit Religion", item)
+                                                    }
+                                                    onDelete={() => {
+
+                                                        setCategoryToDelete(item);
+
+                                                        setIsDeleteModalOpen(true);
+
+                                                    }}
+                                                />
+
+                                            </td>
+
+                                        </tr>
+
+                                    ))
+
+                                ) : (
 
                                     <tr>
 
                                         <td
-                                            colSpan={5}
+                                            colSpan={4}
                                             className="py-10 text-center text-gray-400 italic"
                                         >
 
@@ -507,14 +534,8 @@ export default function AllUsers() {
 
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(
-                        1,
-                        Math.ceil(
-                            filteredReligions.length /
-                            rowsPerPage
-                        )
-                    )}
-                    rowsPerPage={rowsPerPage}
+                    totalPages={pagination?.total_pages || 1}
+                    rowsPerPage={pagination?.per_page || rowsPerPage}
                     onPageChange={(page) =>
                         setCurrentPage(page)
                     }
