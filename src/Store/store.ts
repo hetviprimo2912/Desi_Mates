@@ -10,6 +10,8 @@ import religionListReducer from "./slices/ReligionSlices/religion_list_slice";
 import userCardsReducer from "./slices/UsersSlice/user_cards_slice";
 import userProfileReducer from "./slices/UsersSlice/user_profile_slice";
 import user_delete from "./slices/UsersSlice/user_delete_slice";
+import subscriberUserListReducer from "./slices/SubscribesUsersSlice/subscriber_user_list_slice";
+import subscriberUserCardReducer from "./slices/SubscribesUsersSlice/subscriber_user_card_slice";
 
 export const store = configureStore({
   reducer: {
@@ -28,6 +30,9 @@ export const store = configureStore({
     starsign_list: starsignListReducer,
 
     religion_list: religionListReducer,
+
+    subscriber_user_list: subscriberUserListReducer,
+    subscriber_user_card: subscriberUserCardReducer,
   },
 });
 
