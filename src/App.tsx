@@ -69,6 +69,13 @@ function App() {
             element={<AddCategory />}
           />
           <Route
+
+            path="/category/edit/:id"
+
+            element={<AddCategory />}
+
+          />
+          <Route
             path="/interest/all-interest"
             element={<AllInterest />}
           />
@@ -78,12 +85,20 @@ function App() {
             element={<AddInterest />}
           />
           <Route
+            path="/interest/edit/:id"
+            element={<AddInterest />}
+          />
+          <Route
             path="/starsign/all-starsign"
             element={<AllStarSign />}
           />
 
           <Route
             path="/starsign/add-starsign"
+            element={<AddStarSign />}
+          />
+          <Route
+            path="/starsign/edit/:id"
             element={<AddStarSign />}
           />
           <Route

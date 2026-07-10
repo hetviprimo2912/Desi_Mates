@@ -1,7 +1,53 @@
-import { useState, type ChangeEvent } from "react";
+import {
+    useState,
+    useEffect,
+    type ChangeEvent,
+} from "react";
+
+import {
+
+    useNavigate,
+
+    useParams,
+
+
+} from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import type {
+    AppDispatch,
+} from "../../Store/store";
+
+import { add_category }
+    from "../../Store/slices/CategorySlices/add_category_thunk";
+import { all_category_list }
+    from "../../Store/slices/CategorySlices/all_category_list_thunk";
 import TogglableSwitch from "../../Components/TogglableSwitch";
 
+import { edit_category }
+    from "../../Store/slices/CategorySlices/edit_category_thunk";
+import { get_category_details }
+    from "../../Store/slices/CategorySlices/get_category_details_thunk";
+
+import type { RootState }
+    from "../../Store/store";
 export default function CategoryForm() {
+    const dispatch =
+        useDispatch<AppDispatch>();
+    const {
+        category,
+        loading,
+    } = useSelector(
+        (state: RootState) =>
+            state.get_category_details
+    );
+    const { id } = useParams();
+
+
+
+    const navigate =
+        useNavigate();
+
+
 
     const [categoryName, setCategoryName] =
         useState("");
@@ -21,6 +67,34 @@ export default function CategoryForm() {
         useState("No file chosen");
     const [status, setStatus] =
         useState(true);
+    const [saving, setSaving] =
+        useState(false);
+    useEffect(() => {
+
+        if (!id) return;
+
+        dispatch(
+            get_category_details({
+                id,
+            })
+        );
+
+    }, [dispatch, id]);
+    useEffect(() => {
+
+        if (!category) return;
+
+        setCategoryName(category.title || "");
+
+        setDescription(category.description || "");
+
+        setStatus(category.status === "1");
+
+        setPreview(category.image || "");
+
+        setFileName("Current Image");
+
+    }, [category]);
     const handleImageChange = (
         e: ChangeEvent<HTMLInputElement>
     ) => {
@@ -40,17 +114,86 @@ export default function CategoryForm() {
 
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
 
-        console.log({
-            categoryName,
-            description,
-            status,
-            selectedImage,
-        });
+        if (!id && !selectedImage) return;
+
+        setSaving(true);
+
+        try {
+
+            if (id) {
+
+                await dispatch(
+
+                    edit_category({
+
+                        id,
+
+                        name: categoryName,
+
+                        description,
+
+                        status: status ? "1" : "0",
+
+                        image: selectedImage ?? undefined,
+
+                    })
+
+                ).unwrap();
+
+            } else {
+
+                await dispatch(
+
+                    add_category({
+
+                        name: categoryName,
+
+                        description,
+
+                        image: selectedImage!,
+
+                        status: status ? "1" : "0",
+
+                    })
+
+                ).unwrap();
+
+            }
+
+            await dispatch(
+
+                all_category_list({
+
+                    page_no: 1,
+
+                    per_page: 1000,
+
+                    search: "",
+
+                })
+
+            );
+
+            navigate("/category/all-category");
+
+        } catch (error) {
+
+            console.log(error);
+
+            setSaving(false);
+
+        }
 
     };
-
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center h-full">
+                Loading...
+            </div>
+        );
+    }
     return (
 
         <div className="bg-white border border-gray-200 rounded-[12px] flex flex-col h-full">
@@ -61,7 +204,11 @@ export default function CategoryForm() {
 
                 <h2 className="text-[26px] font-semibold text-[#101828]">
 
-                    Add Main Category
+                    {id
+
+                        ? "Edit Category"
+
+                        : "Add Main Category"}
 
                 </h2>
 
@@ -116,6 +263,7 @@ export default function CategoryForm() {
                         <textarea
                             rows={5}
                             value={description}
+                            maxLength={1000}
                             onChange={(e) =>
                                 setDescription(
                                     e.target.value
@@ -125,6 +273,16 @@ export default function CategoryForm() {
                             className="w-full rounded-[10px] border border-gray-300 px-4 py-3 outline-none resize-none focus:border-blue-500"
                         />
 
+                        <div className="mt-2 flex justify-end">
+                            <span
+                                className={`text-xs ${description.length >= 1000
+                                    ? "text-red-500"
+                                    : "text-gray-400"
+                                    }`}
+                            >
+                                {description.length}/1000
+                            </span>
+                        </div>
                     </div>
 
                     {/* Image */}
@@ -218,19 +376,28 @@ export default function CategoryForm() {
             <div className="border-t border-gray-200 px-6 py-4 flex justify-end gap-3">
 
                 <button
+                    onClick={() =>
+                        navigate("/category/all-category")
+                    }
                     className="px-5 py-2 rounded-[10px] border border-gray-300 text-gray-700 font-medium hover:bg-gray-50"
                 >
-
                     Cancel
 
                 </button>
 
                 <button
+                    disabled={saving}
                     onClick={handleSubmit}
                     className="px-6 py-2 rounded-[10px] bg-[#2563EB] text-white font-medium hover:bg-[#1D4ED8]"
                 >
 
-                    Save Category
+                    {saving
+                        ? id
+                            ? "Updating..."
+                            : "Saving..."
+                        : id
+                            ? "Update Category"
+                            : "Save Category"}
 
                 </button>
 
@@ -241,3 +408,4 @@ export default function CategoryForm() {
     );
 
 }
+

@@ -14,7 +14,12 @@ import Pagination from "../../Components/Pagination";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+
 import { starsign_list } from "../../Store/slices/StarSlices/starsign_list_thunk";
+import { delete_starsign } from "../../Store/slices/StarSlices/delete_starsign_thunk";
+import { starsign_card } from "../../Store/slices/StarSlices/starsign_card_thunk";
+
 import type { StarSignItem } from "../../Types/StarTypes/starsign_list_types";
 import type { RootState, AppDispatch } from "../../Store/store";
 
@@ -24,46 +29,13 @@ const SYMBOLS: Record<string, string> = {
     Sagittarius: "♐", Capricorn: "♑", Aquarius: "♒", Pisces: "♓",
 };
 
-const starSignStats = [
-    {
-        label: "Total Star Signs",
-        value: "12",
-        sub: "Available zodiac signs",
-        icon: <Sparkles size={24} className="text-violet-600" />,
-        bg: "bg-violet-50",
-    },
-    {
-        label: "Profiles With Star Sign",
-        value: "18,240",
-        sub: "Users who selected a star sign",
-        icon: <Users size={24} className="text-blue-600" />,
-        bg: "bg-blue-50",
-    },
-    {
-        label: "Most Popular Sign",
-        value: "Leo",
-        sub: "Chosen by 2,846 profiles",
-        icon: <Star size={24} className="text-yellow-600" />,
-        bg: "bg-yellow-50",
-    },
-    {
-        label: "Least Popular Sign",
-        value: "Capricorn",
-        sub: "Chosen by 632 profiles",
-        icon: <ArrowDownCircle size={24} className="text-red-600" />,
-        bg: "bg-red-50",
-    },
-];
-
 export default function AllStarSign() {
     const dispatch = useDispatch<AppDispatch>();
-    const {
-        starsign,
-        pagination,
-        loading,
-    } = useSelector(
-        (state: RootState) => state.starsign_list
-    );
+    const navigate = useNavigate();
+
+    const { starsign, pagination, loading } = useSelector((state: RootState) => state.starsign_list);
+    const { data: cardData } = useSelector((state: RootState) => state.starsign_card);
+    const { loading: deleteLoading } = useSelector((state: RootState) => state.delete_starsign);
 
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearch, setDebouncedSearch] = useState("");
@@ -73,10 +45,10 @@ export default function AllStarSign() {
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<StarSignItem | null>(null);
+    const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(new Set());
 
     const exportRef = useRef<HTMLDivElement | null>(null);
 
-    // Debounce search
     useEffect(() => {
         const timer = setTimeout(() => {
             setDebouncedSearch(searchTerm);
@@ -85,12 +57,11 @@ export default function AllStarSign() {
         return () => clearTimeout(timer);
     }, [searchTerm]);
 
-    // Fetch from API
     useEffect(() => {
         dispatch(starsign_list({ page_no: currentPage, per_page: rowsPerPage, search: debouncedSearch }));
+        dispatch(starsign_card());
     }, [dispatch, currentPage, rowsPerPage, debouncedSearch]);
 
-    // Close export dropdown on outside click
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
             if (exportRef.current && !exportRef.current.contains(e.target as Node)) {
@@ -114,11 +85,60 @@ export default function AllStarSign() {
     const isAllSelected = starsign.length > 0 && starsign.every((_, i) => selectedItems.has(i));
     const isIndeterminate = starsign.some((_, i) => selectedItems.has(i)) && !isAllSelected;
 
-    const handleDelete = () => {
-        setSelectedItems(new Set());
-        setItemToDelete(null);
-        setIsDeleteModalOpen(false);
+    const toggleDescription = (id: string) => {
+        setExpandedDescriptions((prev) => {
+            const updated = new Set(prev);
+            updated.has(id) ? updated.delete(id) : updated.add(id);
+            return updated;
+        });
     };
+
+    const handleDelete = async () => {
+        if (!itemToDelete || deleteLoading) return;
+        try {
+            await dispatch(delete_starsign({ id: itemToDelete.id })).unwrap();
+            await Promise.all([
+                dispatch(starsign_list({ page_no: currentPage, per_page: rowsPerPage, search: debouncedSearch })),
+                dispatch(starsign_card()),
+            ]);
+            setSelectedItems(new Set());
+            setItemToDelete(null);
+            setIsDeleteModalOpen(false);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const starSignStats = [
+        {
+            label: "Total Star Signs",
+            value: cardData?.total_star_signs ?? "—",
+            sub: "Available zodiac signs",
+            icon: <Sparkles size={24} className="text-violet-600" />,
+            bg: "bg-violet-50",
+        },
+        {
+            label: "Profiles With Star Sign",
+            value: cardData?.profiles_with_star_sign ?? "—",
+            sub: "Users who selected a star sign",
+            icon: <Users size={24} className="text-blue-600" />,
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Most Popular Sign",
+            value: cardData?.most_popular_sign ?? "—",
+            sub: "Most chosen sign",
+            icon: <Star size={24} className="text-yellow-600" />,
+            bg: "bg-yellow-50",
+        },
+        {
+            label: "Least Popular Sign",
+            value: cardData?.least_popular_sign ?? "—",
+            sub: "Least chosen sign",
+            icon: <ArrowDownCircle size={24} className="text-red-600" />,
+            bg: "bg-red-50",
+        },
+    ];
 
     return (
         <div className="w-full min-h-screen text-[#111827]">
@@ -126,8 +146,15 @@ export default function AllStarSign() {
 
                 {isDeleteModalOpen && (
                     <CategoriesDeleteModal
-                        onClose={() => { setIsDeleteModalOpen(false); setItemToDelete(null); }}
-                        onConfirm={handleDelete}
+                        onClose={() => {
+                            if (deleteLoading) return;
+                            setIsDeleteModalOpen(false);
+                            setItemToDelete(null);
+                        }}
+                        onConfirm={() => {
+                            if (!deleteLoading) handleDelete();
+                        }}
+                        loading={deleteLoading}
                     />
                 )}
 
@@ -169,47 +196,23 @@ export default function AllStarSign() {
                 </div>
 
                 {/* Stats */}
-                {/* Stats */}
-
                 {loading ? (
-
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
-
                         {[...Array(4)].map((_, index) => (
-
-                            <div
-                                key={index}
-                                className="bg-white border border-gray-200 rounded-xl p-6"
-                            >
-
+                            <div key={index} className="bg-white border border-gray-200 rounded-xl p-6">
                                 <div className="flex items-center gap-4">
-
                                     <div className="w-14 h-14 rounded-xl bg-gray-200" />
-
                                     <div className="flex-1">
-
                                         <div className="h-4 w-28 rounded bg-gray-200" />
-
                                         <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
-
                                         <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
-
                                     </div>
-
                                 </div>
-
                             </div>
-
                         ))}
-
                     </div>
-
                 ) : (
-
-                    <StatsCard
-                        stats={starSignStats}
-                    />
-
+                    <StatsCard stats={starSignStats} />
                 )}
 
                 {/* Table */}
@@ -230,164 +233,91 @@ export default function AllStarSign() {
                             <tbody className="divide-y divide-gray-100">
 
                                 {loading ? (
-
                                     [...Array(rowsPerPage)].map((_, index) => (
-
-                                        <tr
-                                            key={index}
-                                            className="animate-pulse"
-                                        >
-
-                                            {/* Checkbox */}
-
-                                            <td className="px-4 py-5">
-
-                                                <div className="h-4 w-4 rounded bg-gray-200" />
-
-                                            </td>
-
-                                            {/* Symbol */}
-
-                                            <td className="px-4 py-5">
-
-                                                <div className="w-12 h-12 rounded-full bg-gray-200" />
-
-                                            </td>
-
-                                            {/* Name */}
-
-                                            <td className="px-4 py-5">
-
-                                                <div className="h-4 w-32 rounded bg-gray-200" />
-
-                                            </td>
-
-                                            {/* Description */}
-
-                                            <td className="px-4 py-5">
-
-                                                <div className="h-4 w-56 rounded bg-gray-200" />
-
-                                            </td>
-
-                                            {/* Action */}
-
-                                            <td className="px-4 py-5">
-
-                                                <div className="flex justify-center">
-
-                                                    <div className="h-8 w-16 rounded bg-gray-200" />
-
-                                                </div>
-
-                                            </td>
-
+                                        <tr key={index} className="animate-pulse">
+                                            <td className="px-4 py-5"><div className="h-4 w-4 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="w-12 h-12 rounded-full bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-32 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-56 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="flex justify-center"><div className="h-8 w-16 rounded bg-gray-200" /></div></td>
                                         </tr>
-
                                     ))
-
                                 ) : starsign.length > 0 ? (
-
                                     starsign.map((item, idx) => (
-
-                                        <tr
-                                            key={item.id}
-                                            className="hover:bg-gray-50 transition-colors"
-                                        >
+                                        <tr key={item.id} className="hover:bg-gray-50 transition-colors">
 
                                             {/* Checkbox */}
-
                                             <td className="pl-8 px-4 py-4">
-
                                                 <input
                                                     type="checkbox"
                                                     checked={selectedItems.has(idx)}
-                                                    onChange={(e) =>
-                                                        handleSelectItem(
-                                                            idx,
-                                                            e.target.checked
-                                                        )
-                                                    }
+                                                    onChange={(e) => handleSelectItem(idx, e.target.checked)}
                                                     className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
                                                 />
-
                                             </td>
 
                                             {/* Symbol */}
-
                                             <td className="pl-22 px-6 py-5 whitespace-nowrap">
-
                                                 <div className="flex items-center justify-center w-12 h-12 rounded-full bg-indigo-50 text-3xl">
-
                                                     {SYMBOLS[item.name] ?? "✦"}
-
                                                 </div>
-
                                             </td>
 
                                             {/* Name */}
-
                                             <td className="pl-36 px-6 py-5 whitespace-nowrap">
-
                                                 <p className="text-[15px] font-medium text-[#111827]">
-
                                                     {item.name?.trim() || "N/A"}
-
                                                 </p>
-
                                             </td>
 
                                             {/* Description */}
-
                                             <td className="pl-70 px-6 py-5">
-
-                                                <p className="text-[14px] text-gray-600 break-words">
-
-                                                    {item.description?.trim() || "N/A"}
-
-                                                </p>
-
+                                                {item.description ? (
+                                                    <div className="max-w-[460px]">
+                                                        <p className="text-[14px] text-gray-600 whitespace-pre-wrap break-words">
+                                                            {expandedDescriptions.has(item.id)
+                                                                ? item.description
+                                                                : item.description.length > 120
+                                                                    ? `${item.description.slice(0, 120)}...`
+                                                                    : item.description}
+                                                        </p>
+                                                        {item.description.length > 120 && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleDescription(item.id)}
+                                                                className="mt-1 text-xs font-semibold text-blue-600 hover:underline"
+                                                            >
+                                                                {expandedDescriptions.has(item.id) ? "Show Less" : "Show More"}
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    "N/A"
+                                                )}
                                             </td>
 
                                             {/* Action */}
-
                                             <td className="px-4 py-5 text-center whitespace-nowrap">
-
                                                 <Action
                                                     showView={false}
                                                     showEdit={true}
                                                     showDelete={true}
-                                                    onEdit={() => console.log("Edit", item)}
+                                                    onEdit={() => navigate(`/starsign/edit/${item.id}`)}
                                                     onDelete={() => {
-
                                                         setItemToDelete(item);
-
                                                         setIsDeleteModalOpen(true);
-
                                                     }}
                                                 />
-
                                             </td>
 
                                         </tr>
-
                                     ))
-
                                 ) : (
-
                                     <tr>
-
-                                        <td
-                                            colSpan={5}
-                                            className="py-10 text-center text-gray-400 italic"
-                                        >
-
+                                        <td colSpan={5} className="py-10 text-center text-gray-400 italic">
                                             No star signs found.
-
                                         </td>
-
                                     </tr>
-
                                 )}
 
                             </tbody>

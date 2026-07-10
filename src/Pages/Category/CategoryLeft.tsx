@@ -1,56 +1,67 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Folder } from "lucide-react";
 import Search from "../../Components/Search";
+import { useDispatch, useSelector } from "react-redux";
 
-const categories = [
-    "Music",
-    "Podcast",
-    "Health",
-    "Travel",
-    "Sports",
-    "Movies",
-    "Education",
-    "Business",
-    "Fashion",
-    "Gaming",
-    "Photography",
-    "Technology",
-    "Food",
-    "Finance",
-    "Science",
-    "History",
-    "Nature",
-    "Comedy",
-    "News",
-    "Politics",
-    "Kids",
-    "Animation",
-    "Books",
-    "Fitness",
-    "Cars",
-    "Lifestyle",
-    "Pets",
-    "AI",
-    "Programming",
-    "Space",
-];
+import type {
+    RootState,
+    AppDispatch,
+} from "../../Store/store";
+
+import { all_category_list }
+    from "../../Store/slices/CategorySlices/all_category_list_thunk";
+
+
 export default function CategoryLeft() {
+    const dispatch =
+        useDispatch<AppDispatch>();
 
+    const {
+        category,
+    } = useSelector(
+        (state: RootState) =>
+            state.category_list
+    );
     const [searchTerm, setSearchTerm] =
         useState("");
 
     const [selectedCategory, setSelectedCategory] =
         useState("Music");
+    useEffect(() => {
 
-    const filteredCategories = useMemo(() => {
+        dispatch(
+            all_category_list({
 
-        return categories.filter(category =>
-            category
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
+                page_no: 1,
+
+                per_page: 1000,
+
+                search: "",
+
+            })
         );
 
-    }, [searchTerm]);
+    }, [dispatch]);
+    const filteredCategories =
+        useMemo(() => {
+
+            return category.filter(item =>
+
+                item.title
+                    ?.toLowerCase()
+                    .includes(
+                        searchTerm.toLowerCase()
+                    )
+
+            );
+
+        }, [
+
+            category,
+
+            searchTerm,
+
+        ]);
 
     return (
 
@@ -86,16 +97,16 @@ export default function CategoryLeft() {
 
                 {filteredCategories.length > 0 ? (
 
-                    filteredCategories.map(category => (
+                    filteredCategories.map(cat => (
 
                         <button
-                            key={category}
+                            key={cat.id}
                             onClick={() =>
-                                setSelectedCategory(category)
+                                setSelectedCategory(cat.title)
                             }
                             className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors cursor-pointer
                                 
-                                ${selectedCategory === category
+                                ${selectedCategory === cat.title
                                     ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
                                     : "hover:bg-gray-50 text-gray-700"
                                 }`}
@@ -105,7 +116,7 @@ export default function CategoryLeft() {
 
                             <span className="text-[15px] font-medium">
 
-                                {category}
+                                {cat.title}
 
                             </span>
 

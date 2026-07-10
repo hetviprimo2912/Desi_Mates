@@ -1,5 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import {
+
+    useNavigate,
+
+    useParams,
+
+} from "react-router-dom";
+import {
     ChevronDown,
     Download,
     Grid3X3,
@@ -16,19 +23,21 @@ import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import StatsCard from "../../Components/StatsCard";
 import { useDispatch, useSelector } from "react-redux";
-
 import { all_category_list } from "../../Store/slices/CategorySlices/all_category_list_thunk";
+import { toggle_category } from "../../Store/slices/CategorySlices/toggle_category_thunk";
 import type {
     CategoryItem,
 } from "../../Types/CategoryTypes/all_category_list_types";
 import type { RootState, AppDispatch } from "../../Store/store";
 import { category_card }
     from "../../Store/slices/CategorySlices/category_card_thunk";
+import { delete_category }
+    from "../../Store/slices/CategorySlices/delete_category_thunk";
 
 export default function AllCategory() {
 
     const dispatch = useDispatch<AppDispatch>();
-
+    const navigate = useNavigate();
     const {
         category,
         pagination,
@@ -42,7 +51,19 @@ export default function AllCategory() {
     } = useSelector(
         (state: RootState) => state.category_card
     );
+    const handleToggleCategory = async (id: string) => {
+        try {
 
+            await dispatch(
+                toggle_category({
+                    id,
+                })
+            ).unwrap();
+
+        } catch (error) {
+            console.log(error);
+        }
+    };
     const [searchTerm, setSearchTerm] =
         useState("");
     const [debouncedSearch, setDebouncedSearch] =
@@ -64,10 +85,16 @@ export default function AllCategory() {
 
     const [categoryToDelete, setCategoryToDelete] =
         useState<CategoryItem | null>(null);
+    const [expandedDescriptions, setExpandedDescriptions] =
+        useState<Set<string>>(new Set());
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
-
+    const {
+        loading: deleteLoading,
+    } = useSelector(
+        (state: RootState) => state.delete_category
+    );
     useEffect(() => {
 
         function handleClickOutside(
@@ -194,16 +221,68 @@ export default function AllCategory() {
             selectedCategories.has(index)
         ) && !isAllSelected;
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
 
-        if (!categoryToDelete) return;
+        if (!categoryToDelete || deleteLoading) return;
 
+        try {
 
-        setSelectedCategories(new Set());
+            await dispatch(
 
-        setCategoryToDelete(null);
+                delete_category({
 
-        setIsDeleteModalOpen(false);
+                    id: categoryToDelete.id,
+
+                })
+
+            ).unwrap();
+
+            await Promise.all([
+
+                dispatch(
+                    all_category_list({
+                        page_no: currentPage,
+                        per_page: rowsPerPage,
+                        search: debouncedSearch,
+                    })
+                ),
+
+                dispatch(category_card()),
+
+            ]);
+
+            setSelectedCategories(new Set());
+
+            setCategoryToDelete(null);
+
+            setIsDeleteModalOpen(false);
+
+        } catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+    const toggleDescription = (id: string) => {
+
+        setExpandedDescriptions((prev) => {
+
+            const updated = new Set(prev);
+
+            if (updated.has(id)) {
+
+                updated.delete(id);
+
+            } else {
+
+                updated.add(id);
+
+            }
+
+            return updated;
+
+        });
 
     };
     const categoryStats = [
@@ -275,12 +354,23 @@ export default function AllCategory() {
                     <CategoriesDeleteModal
                         onClose={() => {
 
+                            if (deleteLoading) return;
+
                             setIsDeleteModalOpen(false);
 
                             setCategoryToDelete(null);
 
                         }}
-                        onConfirm={handleDelete}
+                        onConfirm={() => {
+
+                            if (!deleteLoading) {
+
+                                handleDelete();
+
+                            }
+
+                        }}
+                        loading={deleteLoading}
                     />
                 )}
 
@@ -543,9 +633,45 @@ export default function AllCategory() {
                                                 </p>
                                             </td>
                                             <td className="pl-60 px-6 py-5">
-                                                <p className="text-[14px] text-gray-600 break-words">
-                                                    {cat.description?.trim() || "N/A"}
-                                                </p>
+
+                                                {cat.description ? (
+
+                                                    <div className="max-w-[380px]">
+
+                                                        <p className="text-[14px] text-gray-600 whitespace-pre-wrap break-words">
+
+                                                            {expandedDescriptions.has(cat.id)
+                                                                ? cat.description
+                                                                : cat.description.length > 120
+                                                                    ? `${cat.description.slice(0, 120)}...`
+                                                                    : cat.description}
+
+                                                        </p>
+
+                                                        {cat.description.length > 120 && (
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    toggleDescription(cat.id)
+                                                                }
+                                                                className="mt-1 text-xs font-semibold text-blue-600 hover:underline"
+                                                            >
+                                                                {expandedDescriptions.has(cat.id)
+                                                                    ? "Show Less"
+                                                                    : "Show More"}
+                                                            </button>
+
+                                                        )}
+
+                                                    </div>
+
+                                                ) : (
+
+                                                    "N/A"
+
+                                                )}
+
                                             </td>
 
                                             {/* Status */}
@@ -555,13 +681,9 @@ export default function AllCategory() {
                                                 <TogglableSwitch
                                                     isActive={cat.status === "1"}
                                                     onToggle={() =>
-                                                        console.log(
-                                                            "Status Changed",
-                                                            cat.id
-                                                        )
+                                                        handleToggleCategory(cat.id)
                                                     }
                                                 />
-
                                             </td>
 
                                             {/* Action */}
@@ -571,7 +693,9 @@ export default function AllCategory() {
                                                     showView={false}
                                                     showEdit={true}
                                                     showDelete={true}
-                                                    onEdit={() => console.log("Edit Category", cat)}
+                                                    onEdit={() =>
+                                                        navigate(`/category/edit/${cat.id}`)
+                                                    }
                                                     onDelete={() => { setCategoryToDelete(cat); setIsDeleteModalOpen(true); }}
                                                 />
                                             </td>

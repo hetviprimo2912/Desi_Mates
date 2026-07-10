@@ -14,8 +14,10 @@ import Pagination from "../../Components/Pagination";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 
 import { interest_list } from "../../Store/slices/InterestSlice/interest_list_thunk";
+import { delete_interest } from "../../Store/slices/InterestSlice/delete_interest_thunk";
 
 import type {
     InterestItem,
@@ -59,12 +61,17 @@ const interestStats = [
 export default function AllInterest() {
 
     const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
     const {
         interest,
         pagination,
         loading,
     } = useSelector(
         (state: RootState) => state.interest_list
+    );
+
+    const { loading: deleteLoading } = useSelector(
+        (state: RootState) => state.delete_interest
     );
 
     const [searchTerm, setSearchTerm] =
@@ -90,6 +97,9 @@ export default function AllInterest() {
 
     const [categoryToDelete, setCategoryToDelete] =
         useState<InterestItem | null>(null);
+
+    const [expandedDescriptions, setExpandedDescriptions] =
+        useState<Set<string>>(new Set());
 
     const exportRef =
         useRef<HTMLDivElement | null>(null);
@@ -212,15 +222,43 @@ export default function AllInterest() {
             selectedInterests.has(index)
         ) && !isAllSelected;
 
-    const handleDelete = () => {
+    const toggleDescription = (id: string) => {
+        setExpandedDescriptions((prev) => {
+            const updated = new Set(prev);
+            if (updated.has(id)) {
+                updated.delete(id);
+            } else {
+                updated.add(id);
+            }
+            return updated;
+        });
+    };
 
-        if (!categoryToDelete) return;
+    const handleDelete = async () => {
 
-        setSelectedInterests(new Set());
+        if (!categoryToDelete || deleteLoading) return;
 
-        setCategoryToDelete(null);
+        try {
 
-        setIsDeleteModalOpen(false);
+            await dispatch(
+                delete_interest({ id: categoryToDelete.id })
+            ).unwrap();
+
+            await dispatch(
+                interest_list({
+                    page_no: currentPage,
+                    per_page: rowsPerPage,
+                    search: debouncedSearch,
+                })
+            );
+
+            setSelectedInterests(new Set());
+            setCategoryToDelete(null);
+            setIsDeleteModalOpen(false);
+
+        } catch (error) {
+            console.log(error);
+        }
 
     };
     return (
@@ -233,12 +271,17 @@ export default function AllInterest() {
                     <CategoriesDeleteModal
                         onClose={() => {
 
+                            if (deleteLoading) return;
+
                             setIsDeleteModalOpen(false);
 
                             setCategoryToDelete(null);
 
                         }}
-                        onConfirm={handleDelete}
+                        onConfirm={() => {
+                            if (!deleteLoading) handleDelete();
+                        }}
+                        loading={deleteLoading}
                     />
                 )}
 
@@ -525,11 +568,39 @@ export default function AllInterest() {
 
                                             <td className="pl-70 px-6 py-5">
 
-                                                <p className="text-[14px] text-gray-600 break-words">
+                                                {category.description ? (
 
-                                                    {category.description?.trim() || "N/A"}
+                                                    <div className="max-w-[460px]">
 
-                                                </p>
+                                                        <p className="text-[14px] text-gray-600 whitespace-pre-wrap break-words">
+
+                                                            {expandedDescriptions.has(category.id)
+                                                                ? category.description
+                                                                : category.description.length > 120
+                                                                    ? `${category.description.slice(0, 120)}...`
+                                                                    : category.description}
+
+                                                        </p>
+
+                                                        {category.description.length > 120 && (
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => toggleDescription(category.id)}
+                                                                className="mt-1 text-xs font-semibold text-blue-600 hover:underline"
+                                                            >
+                                                                {expandedDescriptions.has(category.id) ? "Show Less" : "Show More"}
+                                                            </button>
+
+                                                        )}
+
+                                                    </div>
+
+                                                ) : (
+
+                                                    "N/A"
+
+                                                )}
 
                                             </td>
 
@@ -542,7 +613,7 @@ export default function AllInterest() {
                                                     showEdit={true}
                                                     showDelete={true}
                                                     onEdit={() =>
-                                                        console.log("Edit Interest", category)
+                                                        navigate(`/interest/edit/${category.id}`)
                                                     }
                                                     onDelete={() => {
 
