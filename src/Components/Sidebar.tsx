@@ -224,7 +224,7 @@ export default function SideBar({ isSearchOpen }: SideBarProps) {
                     {/* Logo */}
                     <div className="flex items-center justify-between px-6 h-[70px] shrink-0">
                         <div className="flex items-center gap-3">
-                            <img src="/logo/logo-icon.png" alt="DesiMates" className="w-10 h-10 object-contain" />
+                            <img src="/admin/logo/logo-icon.png" alt="DesiMates" className="w-10 h-10 object-contain" />
                             <span className="text-[20px] font-bold text-[#111827]">{siteName}</span>
                         </div>
                         <button onClick={() => setIsOpen(false)} className="lg:hidden p-2 text-gray-400 hover:text-gray-600">

@@ -37,7 +37,7 @@ const LeftSection = () => {
         <div className="mb-10 mt-4">
 
           <img
-            src="/logo/logo.png"
+            src="/admin/logo/logo.png"
             alt="DesiMates"
             className="h-20 w-auto object-contain"
           />

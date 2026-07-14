@@ -197,7 +197,7 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
             <header className="theme-container fixed top-0 right-0 z-[45] w-full lg:w-[calc(100%-280px)] lg:ml-[280px] h-[70px] bg-white flex items-center justify-between px-6 shadow-sm font-inter text-left">
                 <div className="flex items-center gap-4">
                     <img
-                        src="/logo/logo.png"
+                        src="/admin/logo/logo.png"
                         alt="DesiMates"
                         className="h-10 w-auto lg:hidden pl-12 object-contain"
                     />

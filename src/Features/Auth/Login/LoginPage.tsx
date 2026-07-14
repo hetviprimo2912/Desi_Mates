@@ -87,7 +87,7 @@ const LoginPage = () => {
 
                         <div className="flex justify-center mb-6">
                             <img
-                                src="/logo/logo.png"
+                                src="/admin/logo/logo.png"
                                 alt="DesiMates"
                                 className="h-24 w-auto object-contain"
                             />
