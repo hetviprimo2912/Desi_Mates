@@ -12,7 +12,7 @@ import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
 import Tags from "../../Components/Tags";
-import TogglableSwitch from "../../Components/TogglableSwitch";
+
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import jsPDF from "jspdf";
@@ -357,7 +357,7 @@ export default function AllUsers() {
         const csvContent = [headers, ...rows]
             .map((row) =>
                 row
-                    .map((value) =>
+                    .map((value: string | number) =>
                         `"${String(value).replace(/"/g, '""')}"`
                     )
                     .join(",")

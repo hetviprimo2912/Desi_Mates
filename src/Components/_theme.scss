@@ -8,10 +8,6 @@ $active-bg: rgba(37, 99, 235, 0.05);
   --sidebar-active-bg: #{$active-bg};
 }
 
-:export {
-  brandBlue: $blue-600;
-  activeBg: $active-bg;
-}
 
 .theme-container,
 .sidebar-container {

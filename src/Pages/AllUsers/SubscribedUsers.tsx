@@ -8,7 +8,7 @@ import Search from "../../Components/Search";
 import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
 import Tags from "../../Components/Tags";
-import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
+//import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 
 import { subscriber_user_list } from "../../Store/slices/SubscribesUsersSlice/subscriber_user_list_thunk";
@@ -29,8 +29,8 @@ export default function SubscribedUsers() {
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedUsers, setSelectedUsers] = useState<Set<number>>(new Set());
     const [isExportOpen, setIsExportOpen] = useState(false);
-    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [userToDelete, setUserToDelete] = useState<number | null>(null);
+    //const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    //const [userToDelete, setUserToDelete] = useState<number | null>(null);
 
     const exportRef = useRef<HTMLDivElement | null>(null);
 
@@ -108,10 +108,10 @@ export default function SubscribedUsers() {
         setSelectedUsers(updated);
     };
 
-    const handleDelete = () => {
-        setUserToDelete(null);
-        setIsDeleteModalOpen(false);
-    };
+    // const handleDelete = () => {
+    //     setUserToDelete(null);
+    //     setIsDeleteModalOpen(false);
+    // };
 
     const totalPages = pagination?.last_page ?? 1;
 
@@ -119,12 +119,12 @@ export default function SubscribedUsers() {
         <div className="w-full min-h-screen text-[#111827]">
             <div className="px-4 sm:px-8 pt-4 pb-12">
 
-                {isDeleteModalOpen && (
+                {/* {isDeleteModalOpen && (
                     <CategoriesDeleteModal
                         onClose={() => { setIsDeleteModalOpen(false); setUserToDelete(null); }}
                         onConfirm={handleDelete}
                     />
-                )}
+                )} */}
 
                 {/* Header */}
                 <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6 mb-8">
@@ -258,7 +258,7 @@ export default function SubscribedUsers() {
                                                     showEdit={false}
                                                     showDelete={true}
                                                     onView={() => navigate(`/sub-users/view/${user.id}`)}
-                                                    onDelete={() => { setUserToDelete(user.id); setIsDeleteModalOpen(true); }}
+                                                    //onDelete={() => { setUserToDelete(user.id); setIsDeleteModalOpen(true); }}
                                                 />
                                             </td>
                                         </tr>

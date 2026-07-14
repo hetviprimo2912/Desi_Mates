@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent } from "react";
-import TogglableSwitch from "../../Components/TogglableSwitch";
+
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -8,7 +8,7 @@ import type { AppDispatch, RootState } from "../../Store/store";
 import { event_add } from "../../Store/slices/EventSlices/event_add_thunk";
 import { resetEventAddState } from "../../Store/slices/EventSlices/event_add_slice";
 import { all_category_list } from "../../Store/slices/CategorySlices/all_category_list_thunk";
-import { edit_event } from "../../Store/slices/EventSlices/edit_event_thunk";
+
 import { get_event_details } from "../../Store/slices/EventSlices/get_event_details_thunk"
 import CustomSelect from "../../Components/CustomSelect";
 export default function EventForm() {
@@ -159,7 +159,7 @@ export default function EventForm() {
             event_add({
                 name: eventName,
                 description,
-                image: selectedImage,
+                image: selectedImage!,
                 price,
                 organized_by: organizedBy,
                 cat_name: categoryName,

@@ -1,8 +1,8 @@
-import React from "react";
+
 import {
   UsersIcon,
   ChartBarIcon,
-  ShieldCheckIcon,
+
 } from "@heroicons/react/24/outline";
 
 const features = [

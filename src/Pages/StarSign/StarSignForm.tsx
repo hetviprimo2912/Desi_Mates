@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { AppDispatch, RootState } from "../../Store/store";
-import TogglableSwitch from "../../Components/TogglableSwitch";
 
 import { add_starsign } from "../../Store/slices/StarSlices/add_starsign_thunk";
 import { edit_starsign } from "../../Store/slices/StarSlices/edit_starsign_thunk";
@@ -32,14 +31,14 @@ export default function StarSignForm() {
 
     const [selectedSign, setSelectedSign] = useState("");
     const [description, setDescription] = useState("");
-    const [status, setStatus] = useState(true);
+
     const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         if (!id) {
             setSelectedSign("");
             setDescription("");
-            setStatus(true);
+    
             return;
         }
         dispatch(get_starsign_details({ id }));
@@ -49,7 +48,7 @@ export default function StarSignForm() {
         if (!id || !starsign) return;
         setSelectedSign(starsign.name || "");
         setDescription(starsign.description || "");
-        setStatus(true);
+
     }, [id, starsign]);
 
     const handleSubmit = async () => {

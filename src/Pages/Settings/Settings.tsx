@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
     Eye, EyeOff, Shield, Key, Link2, Globe,
-    Pencil, Save, X, CheckCircle2,
+    Pencil, Save, CheckCircle2,
 } from "lucide-react";
 
 interface SettingsField {

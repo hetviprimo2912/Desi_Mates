@@ -3,8 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
     SearchCheck,
     X,
-    Bell,
-    LogOut,
+
     FileText,
 } from "lucide-react";
 import Cookies from "js-cookie";
@@ -20,8 +19,8 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
     const [showNotif, setShowNotif] = useState(false);
     const [showProfile, setShowProfile] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
-    const [isNotificationOpen, setIsNotificationOpen] = useState(false);
-    const [isSignOutOpen, setIsSignOutOpen] = useState(false);
+    //const [isNotificationOpen, setIsNotificationOpen] = useState(false);
+    //const [isSignOutOpen, setIsSignOutOpen] = useState(false);
 
     // Moved notifications to state so we can update them
 
@@ -34,11 +33,11 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
         profile_pic: "/avatar.webp",
     };
 
-    const notifications: any[] = [];
+    //const notifications: any[] = [];
 
-    const loading = false;
+    //const loading = false;
 
-    const hasUnread = false;
+    //const hasUnread = false;
 
     const notifRef = useRef<HTMLDivElement>(null);
     const bellRef = useRef<HTMLButtonElement>(null);
@@ -140,12 +139,12 @@ export default function Navbar({ isSearchOpen, setIsSearchOpen }: NavbarProps) {
         setSearchTerm("");
     };
 
-    const toggleNotif = (e: React.MouseEvent) => {
-        e.stopPropagation();
-        setShowProfile(false);
-        if (isSearchOpen) setIsSearchOpen(false);
-        setShowNotif(!showNotif);
-    };
+    // const toggleNotif = (e: React.MouseEvent) => {
+    //     e.stopPropagation();
+    //     setShowProfile(false);
+    //     if (isSearchOpen) setIsSearchOpen(false);
+    //     setShowNotif(!showNotif);
+    // };
 
     const toggleProfile = (e: React.MouseEvent) => {
         e.stopPropagation();

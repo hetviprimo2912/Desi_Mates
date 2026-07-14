@@ -1,7 +1,7 @@
 import {
     useState,
     useEffect,
-    type ChangeEvent,
+    
 } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
@@ -38,33 +38,33 @@ export default function CategoryForm() {
 
 
 
-    const [selectedImage, setSelectedImage] =
-        useState<File | null>(null);
+    // const [selectedImage, setSelectedImage] =
+    //     useState<File | null>(null);
 
-    const [preview, setPreview] =
-        useState("");
+    // const [preview, setPreview] =
+    //     useState("");
 
-    const [fileName, setFileName] =
-        useState("No file chosen");
+    // const [fileName, setFileName] =
+    //     useState("No file chosen");
 
-    const handleImageChange = (
-        e: ChangeEvent<HTMLInputElement>
-    ) => {
+    // const handleImageChange = (
+    //     e: ChangeEvent<HTMLInputElement>
+    // ) => {
 
-        const file =
-            e.target.files?.[0];
+    //     const file =
+    //         e.target.files?.[0];
 
-        if (!file) return;
+    //     if (!file) return;
 
-        setSelectedImage(file);
+    //     setSelectedImage(file);
 
-        setFileName(file.name);
+    //     setFileName(file.name);
 
-        setPreview(
-            URL.createObjectURL(file)
-        );
+    //     setPreview(
+    //         URL.createObjectURL(file)
+    //     );
 
-    };
+    // };
     const handleSubmit = async () => {
 
         if (!categoryName.trim()) return;

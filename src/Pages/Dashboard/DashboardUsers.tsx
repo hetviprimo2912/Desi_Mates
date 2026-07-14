@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 
 import TableHeader from "../../Components/TableHeader";
 import Tags from "../../Components/Tags";
-import Action from "../../Components/Action";
+
 
 import { users_list } from "../../Store/slices/UsersSlice/users_list_thunk";
 
@@ -236,7 +236,7 @@ export default function DashboardUsers() {
 
                             users
                                 .slice(0, 5)
-                                .map((user, idx) => (
+                                .map((user) => (
 
                                     <tr
                                         key={user.id}
