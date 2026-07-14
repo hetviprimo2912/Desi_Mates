@@ -1,24 +1,35 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { CalendarDays } from "lucide-react";
 import Search from "../../Components/Search";
+import { useDispatch, useSelector } from "react-redux";
 
-const events = [
-    "Musical Fest (Demo)",
-    "Love Coaching (Demo)",
-    "Desi Night Out",
-    "Bollywood Bash",
-    "Speed Dating",
-];
+import type { AppDispatch, RootState } from "../../Store/store";
+
+import { event_list } from "../../Store/slices/EventSlices/event_list_thunk";
 
 export default function EventLeft() {
+    const dispatch = useDispatch<AppDispatch>();
+
+    const {
+        events,
+        loading,
+    } = useSelector((state: RootState) => state.event_list);
     const [searchTerm, setSearchTerm] = useState("");
-    const [selectedEvent, setSelectedEvent] = useState(events[0]);
-
-    const filteredEvents = useMemo(() =>
-        events.filter(e => e.toLowerCase().includes(searchTerm.toLowerCase())),
-        [searchTerm]
-    );
-
+    const [selectedEvent, setSelectedEvent] = useState<string>("");
+    useEffect(() => {
+        dispatch(
+            event_list({
+                search: searchTerm,
+                page_no: 1,
+                per_page: 1000,
+            })
+        );
+    }, [dispatch, searchTerm]);
+    useEffect(() => {
+        if (events.length > 0 && !selectedEvent) {
+            setSelectedEvent(events[0].name);
+        }
+    }, [events, selectedEvent]);
     return (
         <aside className="h-[calc(100vh-220px)] bg-white border border-gray-200 rounded-[12px] flex flex-col overflow-hidden">
 
@@ -31,19 +42,19 @@ export default function EventLeft() {
             </div>
 
             <div className="flex-1 overflow-y-auto py-2 scrollbar-thin">
-                {filteredEvents.length > 0 ? (
-                    filteredEvents.map(event => (
+                {!loading && events.length > 0 ? (
+                    events.map(event => (
                         <button
-                            key={event}
-                            onClick={() => setSelectedEvent(event)}
+                            key={event.id}
+                            onClick={() => setSelectedEvent(event.name)}
                             className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors cursor-pointer
-                                ${selectedEvent === event
+                                ${selectedEvent === event.name
                                     ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
                                     : "hover:bg-gray-50 text-gray-700"
                                 }`}
                         >
                             <CalendarDays size={18} />
-                            <span className="text-[15px] font-medium">{event}</span>
+                            <span className="text-[15px] font-medium">{event.name}</span>
                         </button>
                     ))
                 ) : (

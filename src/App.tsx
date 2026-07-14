@@ -107,9 +107,17 @@ function App() {
           />
 
           <Route path="/religion/add-religion" element={<AddReligion />} />
+          <Route
+            path="/religion/edit/:id"
+            element={<AddReligion />}
+          />
 
           <Route path="/event/all-event" element={<AllEvent />} />
           <Route path="/event/add-event" element={<AddEvent />} />
+          <Route
+            path="/event/edit/:id"
+            element={<AddEvent />}
+          />
 
           <Route path="/payment/payment-list" element={<PaymentList />} />
 

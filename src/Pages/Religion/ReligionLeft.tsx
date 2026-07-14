@@ -1,19 +1,20 @@
 import { useMemo, useState } from "react";
 import { Folder } from "lucide-react";
 import Search from "../../Components/Search";
+import { useDispatch, useSelector } from "react-redux";
 
-const religions = [
-    "Hindu",
-    "Muslim",
-    "Christian",
-    "Sikh",
-    "Jain",
-    "Buddhist",
-    "Jewish",
-    "Catholic",
-    "Other",
-];
+import type { AppDispatch, RootState } from "../../Store/store";
+
+import { religion_list } from "../../Store/slices/ReligionSlices/religion_list_thunk";
+
+import { useEffect } from "react";
+
 export default function CategoryLeft() {
+    const dispatch = useDispatch<AppDispatch>();
+
+    const { religion } = useSelector(
+        (state: RootState) => state.religion_list
+    );
 
     const [searchTerm, setSearchTerm] =
         useState("");
@@ -23,14 +24,24 @@ export default function CategoryLeft() {
 
     const filteredReligions = useMemo(() => {
 
-        return religions.filter(category =>
-            category
+        return religion.filter(item =>
+            item.name
                 .toLowerCase()
                 .includes(searchTerm.toLowerCase())
         );
 
-    }, [searchTerm]);
+    }, [religion, searchTerm]);
+    useEffect(() => {
 
+        dispatch(
+            religion_list({
+                search: "",
+                page_no: 1,
+                per_page: 1000,
+            })
+        );
+
+    }, [dispatch]);
     return (
 
         <aside className="h-[calc(100vh-220px)] bg-white border border-gray-200 rounded-[12px] flex flex-col overflow-hidden">
@@ -68,13 +79,13 @@ export default function CategoryLeft() {
                     filteredReligions.map(category => (
 
                         <button
-                            key={category}
+                            key={category.id}
                             onClick={() =>
-                                setselectedReligion(category)
+                                setselectedReligion(category.name)
                             }
                             className={`w-full flex items-center gap-3 px-5 py-3 text-left transition-colors cursor-pointer
                                 
-                                ${selectedReligion === category
+                                ${selectedReligion === category.name
                                     ? "bg-blue-50 text-blue-600 border-r-4 border-blue-600"
                                     : "hover:bg-gray-50 text-gray-700"
                                 }`}
@@ -84,7 +95,7 @@ export default function CategoryLeft() {
 
                             <span className="text-[15px] font-medium">
 
-                                {category}
+                                {category.name}
 
                             </span>
 

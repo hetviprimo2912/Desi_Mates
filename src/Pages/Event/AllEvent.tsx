@@ -7,49 +7,37 @@ import Pagination from "../../Components/Pagination";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import { useNavigate } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
+import type { AppDispatch, RootState } from "../../Store/store";
 
-interface Event {
-    id: number;
-    image: string;
-    eventName: string;
-    price: number;
-    organizedBy: string;
-    category: string;
-    totalJoined: number;
-}
+import { event_list } from "../../Store/slices/EventSlices/event_list_thunk";
+import { event_card } from "../../Store/slices/EventSlices/event_card_thunk";
 
-const initialEvents: Event[] = [
-    { id: 1, image: "https://picsum.photos/80?201", eventName: "Musical Fest (Demo)", price: 49, organizedBy: "DesiMatesTeam", category: "Musical Night", totalJoined: 0 },
-    { id: 2, image: "https://picsum.photos/80?202", eventName: "Love Coaching (Demo)", price: 125, organizedBy: "LoveDoctor", category: "Dance", totalJoined: 3 },
-    { id: 3, image: "https://picsum.photos/80?203", eventName: "Desi Night Out", price: 75, organizedBy: "DesiMatesTeam", category: "Networking", totalJoined: 12 },
-    { id: 4, image: "https://picsum.photos/80?204", eventName: "Bollywood Bash", price: 60, organizedBy: "BollywoodClub", category: "Music", totalJoined: 45 },
-    { id: 5, image: "https://picsum.photos/80?205", eventName: "Speed Dating", price: 30, organizedBy: "DesiMatesTeam", category: "Dating", totalJoined: 20 },
-];
-
-const eventStats = [
-    { label: "Total Events", value: "5", sub: "All listed events", icon: <CalendarDays size={24} className="text-blue-600" />, bg: "bg-blue-50" },
-    { label: "Total Joined", value: "80", sub: "Across all events", icon: <Users size={24} className="text-green-600" />, bg: "bg-green-50" },
-    { label: "Categories", value: "5", sub: "Unique event categories", icon: <Tag size={24} className="text-purple-600" />, bg: "bg-purple-50" },
-    { label: "Most Popular", value: "Bollywood Bash", sub: "45 joined", icon: <TrendingUp size={24} className="text-orange-600" />, bg: "bg-orange-50" },
-];
+import type { EventItem } from "../../Types/EventTypes/event_list_types";
 
 export default function AllEvent() {
-    const [events, setEvents] = useState<Event[]>(initialEvents);
+    const dispatch = useDispatch<AppDispatch>();
+
+    const {
+        events,
+        pagination,
+        loading,
+    } = useSelector((state: RootState) => state.event_list);
+
+    const {
+        data: cardData,
+    } = useSelector((state: RootState) => state.event_card);
     const [searchTerm, setSearchTerm] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedEvents, setSelectedEvents] = useState<Set<number>>(new Set());
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [eventToDelete, setEventToDelete] = useState<Event | null>(null);
+    const [eventToDelete, setEventToDelete] = useState<EventItem | null>(null);
     const exportRef = useRef<HTMLDivElement | null>(null);
     const navigate = useNavigate();
-    const filteredEvents = events.filter(event =>
-        event.eventName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        event.organizedBy.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const paginatedEvents = filteredEvents.slice(startIndex, startIndex + rowsPerPage);
+
+    const paginatedEvents = events;
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -58,8 +46,20 @@ export default function AllEvent() {
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+    useEffect(() => {
+        dispatch(
+            event_list({
+                search: searchTerm,
+                page_no: currentPage,
+                per_page: rowsPerPage,
+            })
+        );
 
-    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+        dispatch(event_card());
+    }, [dispatch, searchTerm, currentPage, rowsPerPage]);
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm]);
 
     const handleSelectAll = (checked: boolean) => {
         setSelectedEvents(checked ? new Set(paginatedEvents.map((_, i) => i)) : new Set());
@@ -76,7 +76,8 @@ export default function AllEvent() {
 
     const handleDelete = () => {
         if (!eventToDelete) return;
-        setEvents(prev => prev.filter(e => e.id !== eventToDelete.id));
+        // TODO:
+        // Call delete API here
         setSelectedEvents(new Set());
         setEventToDelete(null);
         setIsDeleteModalOpen(false);
@@ -114,7 +115,7 @@ export default function AllEvent() {
                             {isExportOpen && (
                                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
                                     <button
-                                        onClick={() => { console.table(filteredEvents); setIsExportOpen(false); }}
+                                        onClick={() => { console.table(events); setIsExportOpen(false); }}
                                         className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                                     >
                                         Export as PDF
@@ -126,7 +127,39 @@ export default function AllEvent() {
                 </div>
 
                 {/* Stats */}
-                <StatsCard stats={eventStats} cols={4} />
+                <StatsCard
+                    cols={4}
+                    stats={[
+                        {
+                            label: "Total Events",
+                            value: cardData?.total_events || "0",
+                            sub: "All listed events",
+                            icon: <CalendarDays size={24} className="text-blue-600" />,
+                            bg: "bg-blue-50",
+                        },
+                        {
+                            label: "Total Joined",
+                            value: cardData?.total_joined || "0",
+                            sub: "Across all events",
+                            icon: <Users size={24} className="text-green-600" />,
+                            bg: "bg-green-50",
+                        },
+                        {
+                            label: "Categories",
+                            value: cardData?.total_category || "0",
+                            sub: "Unique event categories",
+                            icon: <Tag size={24} className="text-purple-600" />,
+                            bg: "bg-purple-50",
+                        },
+                        {
+                            label: "Most Popular",
+                            value: cardData?.most_popular || "-",
+                            sub: "",
+                            icon: <TrendingUp size={24} className="text-orange-600" />,
+                            bg: "bg-orange-50",
+                        },
+                    ]}
+                />
 
                 {/* Table */}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
@@ -158,22 +191,22 @@ export default function AllEvent() {
                                             />
                                         </td>
                                         <td className="pl-18 px-4 py-5 whitespace-nowrap">
-                                            <img src={event.image} alt={event.eventName} className="w-12 h-12 rounded-lg object-cover border border-gray-200" />
+                                            <img src={event.image} alt={event.name} className="w-12 h-12 rounded-lg object-cover border border-gray-200" />
                                         </td>
-                                        <td className="pl-24 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{event.eventName}</p>
+                                        <td className="pl-32 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[15px] font-medium text-[#111827]">{event.name}</p>
                                         </td>
                                         <td className="pl-14 px-4 py-5 whitespace-nowrap">
                                             <p className="text-[14px] text-gray-700">{event.price}</p>
                                         </td>
                                         <td className="pl-20 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] text-gray-600">{event.organizedBy}</p>
+                                            <p className="text-[14px] text-gray-600">{event.organized_by}</p>
                                         </td>
                                         <td className="pl-20 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] text-gray-600">{event.category}</p>
+                                            <p className="text-[14px] text-gray-600">{event.cat_id}</p>
                                         </td>
                                         <td className="pl-24 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] font-medium text-[#111827]">{event.totalJoined}</p>
+                                            <p className="text-[14px] font-medium text-[#111827]">{event.count}</p>
                                         </td>
                                         <td className="px-4 py-5 text-center whitespace-nowrap">
                                             <Action
@@ -181,13 +214,15 @@ export default function AllEvent() {
                                                 showEdit={true}
                                                 showDelete={true}
                                                 onView={() => navigate(`/event/view/${event.id}`)}
-                                                onEdit={() => console.log("Edit Event", event)}
+                                                onEdit={() =>
+                                                    navigate(`/event/edit/${event.id}`)
+                                                }
                                                 onDelete={() => { setEventToDelete(event); setIsDeleteModalOpen(true); }}
                                             />
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredEvents.length === 0 && (
+                                {!loading && events.length === 0 && (
                                     <tr>
                                         <td colSpan={8} className="py-10 text-center text-gray-400 italic">
                                             No events found.
@@ -202,7 +237,7 @@ export default function AllEvent() {
                 {/* Pagination */}
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(1, Math.ceil(filteredEvents.length / rowsPerPage))}
+                    totalPages={pagination?.total_pages || 1}
                     rowsPerPage={rowsPerPage}
                     onPageChange={page => setCurrentPage(page)}
                     onRowsPerPageChange={rows => { setRowsPerPage(rows); setCurrentPage(1); }}

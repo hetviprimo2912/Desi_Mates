@@ -18,47 +18,21 @@ import TogglableSwitch from "../../Components/TogglableSwitch";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
 import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../Store/store";
 import type {
     ReligionItem,
 } from "../../Types/ReligionTypes/religion_list_types";
 
 import { religion_list } from "../../Store/slices/ReligionSlices/religion_list_thunk";
+import { religion_card } from "../../Store/slices/ReligionSlices/religion_card_thunk";
+import { delete_religion } from "../../Store/slices/ReligionSlices/delete_religion_thunk";
 
-const religionStats = [
-    {
-        label: "Total Religions",
-        value: "9",
-        sub: "Available religions",
-        icon: <Heart size={24} className="text-red-600" />,
-        bg: "bg-red-50",
-    },
-    {
-        label: "Profiles With Religion",
-        value: "17,580",
-        sub: "Users who selected a religion",
-        icon: <Users size={24} className="text-blue-600" />,
-        bg: "bg-blue-50",
-    },
-    {
-        label: "Most Selected",
-        value: "Hindu",
-        sub: "Chosen by 8,420 users",
-        icon: <Star size={24} className="text-yellow-600" />,
-        bg: "bg-yellow-50",
-    },
-    {
-        label: "Least Selected",
-        value: "Other",
-        sub: "Chosen by 280 users",
-        icon: <TrendingUp size={24} className="text-green-600" />,
-        bg: "bg-green-50",
-    },
-];
+
 export default function AllUsers() {
 
     const dispatch = useDispatch<AppDispatch>();
-
+    const navigate = useNavigate();
     const {
         religion,
         pagination,
@@ -66,7 +40,18 @@ export default function AllUsers() {
     } = useSelector(
         (state: RootState) => state.religion_list
     );
-
+    const {
+        loading: deleteLoading,
+    } = useSelector(
+        (state: RootState) =>
+            state.delete_religion
+    );
+    const {
+        cards,
+        loading: cardLoading,
+    } = useSelector(
+        (state: RootState) => state.religion_card
+    );
     const [searchTerm, setSearchTerm] =
         useState("");
     const [debouncedSearch, setDebouncedSearch] =
@@ -90,6 +75,13 @@ export default function AllUsers() {
         return () => clearTimeout(timer);
 
     }, [searchTerm]);
+    useEffect(() => {
+
+        dispatch(
+            religion_card({})
+        );
+
+    }, [dispatch]);
     useEffect(() => {
 
         dispatch(
@@ -119,6 +111,8 @@ export default function AllUsers() {
 
     const [categoryToDelete, setCategoryToDelete] =
         useState<ReligionItem | null>(null);
+    const [expandedDescriptions, setExpandedDescriptions] =
+        useState<Set<string>>(new Set());
     const exportRef =
         useRef<HTMLDivElement | null>(null);
 
@@ -199,16 +193,97 @@ export default function AllUsers() {
         religion.some((item) =>
             selectedReligions.has(Number(item.id))
         ) && !isAllSelected;
+    const toggleDescription = (id: string) => {
 
-    const handleDelete = () => {
+        setExpandedDescriptions((prev) => {
 
-        setSelectedReligions(new Set());
+            const updated = new Set(prev);
 
-        setCategoryToDelete(null);
+            if (updated.has(id)) {
+                updated.delete(id);
+            } else {
+                updated.add(id);
+            }
 
-        setIsDeleteModalOpen(false);
+            return updated;
+
+        });
 
     };
+    const handleDelete = async () => {
+
+        if (
+            !categoryToDelete ||
+            deleteLoading
+        ) return;
+
+        try {
+
+            await dispatch(
+                delete_religion({
+                    id: categoryToDelete.id,
+                })
+            ).unwrap();
+
+            await Promise.all([
+
+                dispatch(
+                    religion_list({
+                        page_no: currentPage,
+                        per_page: rowsPerPage,
+                        search: debouncedSearch,
+                    })
+                ),
+
+                dispatch(
+                    religion_card({})
+                ),
+
+            ]);
+
+            setSelectedReligions(new Set());
+
+            setCategoryToDelete(null);
+
+            setIsDeleteModalOpen(false);
+
+        } catch (error) {
+
+            console.log(error);
+
+        }
+
+    };
+    const religionStats = [
+        {
+            label: "Total Religions",
+            value: cards?.total_religions ?? 0,
+            sub: "Available religions",
+            icon: <Heart size={24} className="text-red-600" />,
+            bg: "bg-red-50",
+        },
+        {
+            label: "Profiles With Religion",
+            value: cards?.profiles_with_religion ?? 0,
+            sub: "Users who selected a religion",
+            icon: <Users size={24} className="text-blue-600" />,
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Most Selected",
+            value: cards?.most_selected || "N/A",
+            sub: "Most selected religion",
+            icon: <Star size={24} className="text-yellow-600" />,
+            bg: "bg-yellow-50",
+        },
+        {
+            label: "Least Selected",
+            value: cards?.least_selected || "N/A",
+            sub: "Least selected religion",
+            icon: <TrendingUp size={24} className="text-green-600" />,
+            bg: "bg-green-50",
+        },
+    ];
     return (
 
         <div className="w-full min-h-screen text-[#111827]">
@@ -219,15 +294,25 @@ export default function AllUsers() {
                     <CategoriesDeleteModal
                         onClose={() => {
 
+                            if (deleteLoading) return;
+
                             setIsDeleteModalOpen(false);
 
                             setCategoryToDelete(null);
 
                         }}
-                        onConfirm={handleDelete}
+                        onConfirm={() => {
+
+                            if (!deleteLoading) {
+
+                                handleDelete();
+
+                            }
+
+                        }}
+                        loading={deleteLoading}
                     />
                 )}
-
                 {/* Header */}
 
                 <div className="flex flex-col lg:flex-row justify-between lg:items-center gap-6 mb-8">
@@ -312,9 +397,8 @@ export default function AllUsers() {
 
                 </div>
                 {/* Stats Cards */}
-                {/* Stats Cards */}
 
-                {loading ? (
+                {cardLoading ? (
 
                     <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
 
@@ -471,14 +555,48 @@ export default function AllUsers() {
                                             </td>
 
                                             {/* Description */}
-
                                             <td className="pl-90 px-6 py-5">
 
-                                                <p className="text-[14px] text-gray-600 break-words">
+                                                {item.description?.trim() ? (
 
-                                                    {item.description?.trim() || "N/A"}
+                                                    <div className="max-w-[520px]">
 
-                                                </p>
+                                                        <p
+                                                            className={`text-[14px] text-gray-600 break-words ${expandedDescriptions.has(item.id)
+                                                                ? ""
+                                                                : "line-clamp-2"
+                                                                }`}
+                                                        >
+
+                                                            {item.description}
+
+                                                        </p>
+
+                                                        {item.description.length > 120 && (
+
+                                                            <button
+                                                                type="button"
+                                                                onClick={() =>
+                                                                    toggleDescription(item.id)
+                                                                }
+                                                                className="mt-1 text-xs font-semibold text-blue-600 hover:underline"
+                                                            >
+
+                                                                {expandedDescriptions.has(item.id)
+                                                                    ? "Show Less"
+                                                                    : "Show More"}
+
+                                                            </button>
+
+                                                        )}
+
+                                                    </div>
+
+                                                ) : (
+
+                                                    "N/A"
+
+                                                )}
 
                                             </td>
 
@@ -491,7 +609,7 @@ export default function AllUsers() {
                                                     showEdit={true}
                                                     showDelete={true}
                                                     onEdit={() =>
-                                                        console.log("Edit Religion", item)
+                                                        navigate(`/religion/edit/${item.id}`)
                                                     }
                                                     onDelete={() => {
 

@@ -22,10 +22,16 @@ import subscriberUserCardReducer from "./slices/SubscribesUsersSlice/subscriber_
 import toggle_category from "./slices/CategorySlices/toggle_category_slice";
 import add_category from "./slices/CategorySlices/add_category_slice";
 import edit_category from "./slices/CategorySlices/edit_category_slice";
-import getCategoryDetailsReducer
-  from "./slices/CategorySlices/get_category_details_slice";
-import delete_category
-  from "./slices/CategorySlices/delete_category_slice";
+import getCategoryDetailsReducer from "./slices/CategorySlices/get_category_details_slice";
+import delete_category from "./slices/CategorySlices/delete_category_slice";
+import religion_card from "./slices/ReligionSlices/religion_card_slice";
+import religion_add from "./slices/ReligionSlices/religion_add_slice";
+import editReligionReducer from "./slices/ReligionSlices/edit_religion_slice";
+import delete_religion from "./slices/ReligionSlices/delete_religion_slice";
+import event_list from "./slices/EventSlices/event_list_slice";
+import event_card from "./slices/EventSlices/event_card_slice";
+import event_add from "./slices/EventSlices/event_add_slice";
+import edit_event from "./slices/EventSlices/edit_event_slice";
 
 export const store = configureStore({
   reducer: {
@@ -56,9 +62,18 @@ export const store = configureStore({
     starsign_card: starsignCardReducer,
 
     religion_list: religionListReducer,
+    religion_card,
+    religion_add,
+    delete_religion,
+    edit_religion: editReligionReducer,
 
     subscriber_user_list: subscriberUserListReducer,
     subscriber_user_card: subscriberUserCardReducer,
+
+    event_list,
+    event_card,
+    event_add,
+    edit_event,
   },
 });
 
