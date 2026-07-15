@@ -149,6 +149,14 @@ export interface UserProfileResponse {
     status: string;
     data: UserProfileData;
     about: UserAbout[];
+    subscription_details: SubscriptionDetails | null;
+}
+
+export interface SubscriptionDetails {
+    payment_method: string;
+    reference_num: string;
+    expire_date: string;
+    start_date: string;
 }
 
 export interface UserProfileState {
@@ -156,4 +164,5 @@ export interface UserProfileState {
     error: string | null;
     user: UserProfileData | null;
     about: UserAbout[];
+    subscription_details: SubscriptionDetails | null;
 }

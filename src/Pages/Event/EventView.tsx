@@ -1,35 +1,13 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useDispatch, useSelector } from "react-redux";
 import {
     ArrowLeft, CalendarDays, Clock, MapPin, Tag,
     Users, IndianRupee, User, Info,
 } from "lucide-react";
 import Tags from "../../Components/Tags";
-
-interface EventDetails {
-    image: string;
-    eventName: string;
-    description: string;
-    location: string;
-    price: number;
-    organizedBy: string;
-    category: string;
-    eventDate: string;
-    eventTime: string;
-    totalJoined: number;
-}
-
-const event: EventDetails = {
-    image: "https://picsum.photos/600/400?random=11",
-    eventName: "April Done",
-    description: "All done of them",
-    location: "Akhbar Nagar, Nava Vadaj, Ahmedabad, Gujarat, India",
-    price: 300,
-    organizedBy: "DesiMatesTeam",
-    category: "Music",
-    eventDate: "2025-01-30",
-    eventTime: "07:00",
-    totalJoined: 0,
-};
+import type { AppDispatch, RootState } from "../../Store/store";
+import { event_view } from "../../Store/slices/EventSlices/event_view_thunk";
 
 function formatDate(dateStr: string) {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -59,6 +37,22 @@ function Field({ icon, label, value }: FieldProps) {
 
 export default function EventView() {
     const navigate = useNavigate();
+    const { id } = useParams<{ id: string }>();
+    const dispatch = useDispatch<AppDispatch>();
+
+    const { event, loading } = useSelector((state: RootState) => state.event_view);
+
+    useEffect(() => {
+        if (id) dispatch(event_view({ id }));
+    }, [dispatch, id]);
+
+    if (loading || !event) {
+        return (
+            <div className="w-full min-h-screen flex items-center justify-center text-gray-400">
+                {loading ? "Loading..." : "Event not found."}
+            </div>
+        );
+    }
 
     return (
         <div className="w-full min-h-screen bg-gray-50 text-[#111827]">
@@ -88,23 +82,20 @@ export default function EventView() {
                 {/* Hero Card */}
                 <div className="bg-white rounded-[16px] border border-gray-200 shadow-sm overflow-hidden">
 
-                    {/* Two-column hero */}
                     <div className="flex flex-col md:flex-row">
 
                         {/* Left — image */}
                         <div className="relative md:w-72 lg:w-80 shrink-0 h-56 md:h-auto overflow-hidden">
                             <img
                                 src={event.image}
-                                alt={event.eventName}
+                                alt={event.name}
                                 className="w-full h-full object-cover"
                             />
-                            {/* subtle dark vignette on image edges */}
                             <div className="absolute inset-0 bg-gradient-to-r from-black/10 via-transparent to-transparent" />
-                            {/* Category pill on image */}
                             <div className="absolute top-3 left-3">
                                 <span className="flex items-center gap-1.5 px-3 py-1 rounded-full text-[12px] font-semibold bg-black/40 backdrop-blur-sm text-white border border-white/20">
                                     <Tag size={11} />
-                                    {event.category}
+                                    {event.cat_id}
                                 </span>
                             </div>
                         </div>
@@ -112,18 +103,12 @@ export default function EventView() {
                         {/* Right — info panel */}
                         <div className="flex-1 flex flex-col justify-between p-6 gap-5">
 
-                            {/* Top: title + badges */}
                             <div>
-                                <div className="flex flex-wrap items-center gap-2 mb-2">
-                                    <Tags text={event.category} variant="blue" />
-                                    <Tags text={event.totalJoined > 0 ? "Active" : "Upcoming"} variant={event.totalJoined > 0 ? "green" : "purple"} />
-                                    <Tags text="Paid" variant="orange" />
-                                </div>
-                                <h2 className="text-[24px] font-bold text-[#101828] leading-tight">{event.eventName}</h2>
+
+                                <h2 className="text-[24px] font-bold text-[#101828] leading-tight">{event.name}</h2>
                                 <p className="mt-2 text-[13.5px] text-gray-500 leading-relaxed">{event.description || "No description provided."}</p>
                             </div>
 
-                            {/* Middle: key meta */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <div className="flex items-center gap-2.5 text-[13.5px] text-gray-600">
                                     <div className="w-8 h-8 rounded-[8px] bg-blue-50 flex items-center justify-center shrink-0">
@@ -131,7 +116,7 @@ export default function EventView() {
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Date</p>
-                                        <p className="font-semibold text-[#111827]">{formatDate(event.eventDate)}</p>
+                                        <p className="font-semibold text-[#111827]">{formatDate(event.date)}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 text-[13.5px] text-gray-600">
@@ -140,7 +125,7 @@ export default function EventView() {
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Time</p>
-                                        <p className="font-semibold text-[#111827]">{event.eventTime}</p>
+                                        <p className="font-semibold text-[#111827]">{event.time}</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 text-[13.5px] text-gray-600 sm:col-span-2">
@@ -154,7 +139,6 @@ export default function EventView() {
                                 </div>
                             </div>
 
-                            {/* Bottom: price + organizer + joined */}
                             <div className="flex flex-wrap items-center gap-4 pt-4 border-t border-gray-100">
                                 <div className="flex items-center gap-2">
                                     <div className="w-8 h-8 rounded-[8px] bg-emerald-50 flex items-center justify-center">
@@ -172,7 +156,7 @@ export default function EventView() {
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Organizer</p>
-                                        <p className="text-[13px] font-semibold text-[#111827]">{event.organizedBy}</p>
+                                        <p className="text-[13px] font-semibold text-[#111827]">{event.organized_by}</p>
                                     </div>
                                 </div>
                                 <div className="w-px h-8 bg-gray-200" />
@@ -182,7 +166,7 @@ export default function EventView() {
                                     </div>
                                     <div>
                                         <p className="text-[10px] text-gray-400 uppercase tracking-wider font-bold">Joined</p>
-                                        <p className="text-[13px] font-semibold text-[#111827]">{event.totalJoined}</p>
+                                        <p className="text-[13px] font-semibold text-[#111827]">{event.count}</p>
                                     </div>
                                 </div>
                             </div>
@@ -193,14 +177,14 @@ export default function EventView() {
                     <div className="border-t border-gray-100 p-6">
                         <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Full Event Information</p>
                         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
-                            <Field icon={<CalendarDays size={16} className="text-blue-500" />} label="Event Date" value={formatDate(event.eventDate)} />
-                            <Field icon={<Clock size={16} className="text-indigo-500" />} label="Event Time" value={event.eventTime} />
+                            <Field icon={<CalendarDays size={16} className="text-blue-500" />} label="Event Date" value={formatDate(event.date)} />
+                            <Field icon={<Clock size={16} className="text-indigo-500" />} label="Event Time" value={event.time} />
                             <Field icon={<MapPin size={16} className="text-rose-500" />} label="Location" value={event.location} />
-                            <Field icon={<User size={16} className="text-amber-500" />} label="Organized By" value={event.organizedBy} />
-                            <Field icon={<Tag size={16} className="text-purple-500" />} label="Category" value={event.category} />
-                            <Field icon={<Users size={16} className="text-emerald-500" />} label="Total Joined" value={event.totalJoined} />
+                            <Field icon={<User size={16} className="text-amber-500" />} label="Organized By" value={event.organized_by} />
+                            <Field icon={<Tag size={16} className="text-purple-500" />} label="Category" value={event.cat_id} />
+                            <Field icon={<Users size={16} className="text-emerald-500" />} label="Total Joined" value={event.count} />
                             <Field icon={<IndianRupee size={16} className="text-blue-500" />} label="Ticket Price" value={`₹${event.price}`} />
-                            <Field icon={<Info size={16} className="text-gray-400" />} label="Event Name" value={event.eventName} />
+                            <Field icon={<Info size={16} className="text-gray-400" />} label="Event Name" value={event.name} />
                         </div>
                     </div>
                 </div>

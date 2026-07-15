@@ -21,6 +21,7 @@ import PaymentList from "./Pages/Payment/PaymentList";
 import AllMatches from "./Pages/Matches/AllMatches";
 import AllTickets from "./Pages/Ticket/AllTickets";
 import AllReports from "./Pages/Report/AllReports";
+import AddReport from "./Pages/Report/AddReport";
 import ManagerList from "./Pages/EventManager/ManagerList";
 import AddManager from "./Pages/EventManager/AddManager";
 import Settings from "./Pages/Settings/Settings";
@@ -126,12 +127,13 @@ function App() {
           <Route path="/ticket/all-tickets" element={<AllTickets />} />
 
           <Route path="/report/all-reports" element={<AllReports />} />
+          <Route path="/report/add-reports" element={<AddReport />} />
 
           <Route path="/event-manager/manager-list" element={<ManagerList />} />
           <Route path="/event-manager/add-manager" element={<AddManager />} />
+          <Route path="/event-manager/edit/:id" element={<AddManager />} />
 
           <Route path="/settings" element={<Settings />} />
-          <Route path="/report/add-reports" element={<AllReports />} />
           <Route path="/all-users/view/:id" element={<UserView />} />
           <Route path="/sub-users/view/:id" element={<SubscribedUserView />} />
           <Route

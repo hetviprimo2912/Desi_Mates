@@ -1,25 +1,13 @@
 import { useNavigate } from "react-router-dom";
 import TableHeader from "../../Components/TableHeader";
+import type { NewEvent } from "../../Types/DashboardTypes/dashboard_types";
 
-interface Event {
-    id: number;
-    image: string;
-    eventName: string;
-    price: number;
-    organizedBy: string;
-    category: string;
-    totalJoined: number;
+interface Props {
+    events?: NewEvent[];
+    loading?: boolean;
 }
 
-const events: Event[] = [
-    { id: 1, image: "https://picsum.photos/80?201", eventName: "Musical Fest (Demo)", price: 49, organizedBy: "DesiMates Team", category: "Music", totalJoined: 0 },
-    { id: 2, image: "https://picsum.photos/80?202", eventName: "Love Coaching", price: 125, organizedBy: "Love Doctor", category: "Dating", totalJoined: 12 },
-    { id: 3, image: "https://picsum.photos/80?203", eventName: "Desi Night Out", price: 75, organizedBy: "DesiMates Team", category: "Networking", totalJoined: 26 },
-    { id: 4, image: "https://picsum.photos/80?204", eventName: "Bollywood Bash", price: 60, organizedBy: "Bollywood Club", category: "Music", totalJoined: 45 },
-    { id: 5, image: "https://picsum.photos/80?205", eventName: "Speed Dating", price: 30, organizedBy: "DesiMates Team", category: "Dating", totalJoined: 18 },
-];
-
-export default function NewEvents() {
+export default function NewEvents({ events = [], loading }: Props) {
     const navigate = useNavigate();
 
     return (
@@ -50,41 +38,52 @@ export default function NewEvents() {
                         onSelectAll={() => { }}
                     />
                     <tbody className="divide-y divide-gray-100">
-                        {events.map((event) => (
-                            <tr key={event.id} className="hover:bg-gray-50 transition-colors">
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-3">
-                                        <img
-                                            src={event.image}
-                                            alt={event.eventName}
-                                            className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
-                                        />
-                                        <div className="pl-14 min-w-0">
-                                            <p className="text-[14px] font-medium text-[#101828] truncate">{event.eventName}</p>
-                                            <p className="text-xs text-[#667085]">Event #{event.id}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td className="pl-14 px-4 py-3 whitespace-nowrap">
-                                    <span className="text-[14px] font-medium text-[#101828]">${event.price}</span>
-                                </td>
-                                <td className="pl-16 px-4 py-3 whitespace-nowrap">
-                                    <span className="text-[13px] text-[#344054]">{event.organizedBy}</span>
-                                </td>
-                                <td className="pl-20 px-4 py-3 whitespace-nowrap">
-                                    <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
-                                        {event.category}
-                                    </span>
-                                </td>
-                                <td className="pl-14 px-4 py-3 whitespace-nowrap">
-                                    <span className="text-[14px] font-medium text-[#101828]">{event.totalJoined}</span>
-                                </td>
-                            </tr>
-                        ))}
-                        {events.length === 0 && (
+                        {loading ? (
+                            [...Array(5)].map((_, i) => (
+                                <tr key={i} className="animate-pulse">
+                                    <td className="px-4 py-3"><div className="flex items-center gap-3"><div className="w-10 h-10 rounded-lg bg-gray-200 flex-shrink-0" /><div className="h-4 w-32 rounded bg-gray-200" /></div></td>
+                                    <td className="px-4 py-3"><div className="h-4 w-12 rounded bg-gray-200" /></td>
+                                    <td className="px-4 py-3"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+                                    <td className="px-4 py-3"><div className="h-5 w-16 rounded-full bg-gray-200" /></td>
+                                    <td className="px-4 py-3"><div className="h-4 w-8 rounded bg-gray-200" /></td>
+                                </tr>
+                            ))
+                        ) : events.length === 0 ? (
                             <tr>
                                 <td colSpan={5} className="py-8 text-center text-gray-400 italic">No events found.</td>
                             </tr>
+                        ) : (
+                            events.map((event) => (
+                                <tr key={event.id} className="hover:bg-gray-50 transition-colors">
+                                    <td className="px-4 py-3">
+                                        <div className="flex items-center gap-3">
+                                            <img
+                                                src={event.image}
+                                                alt={event.name}
+                                                className="w-10 h-10 rounded-lg object-cover border border-gray-200 flex-shrink-0"
+                                            />
+                                            <div className="pl-14 min-w-0">
+                                                <p className="text-[14px] font-medium text-[#101828] truncate">{event.name}</p>
+                                                <p className="text-xs text-[#667085]">Event #{event.id}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="pl-14 px-4 py-3 whitespace-nowrap">
+                                        <span className="text-[14px] font-medium text-[#101828]">${event.price}</span>
+                                    </td>
+                                    <td className="pl-16 px-4 py-3 whitespace-nowrap">
+                                        <span className="text-[13px] text-[#344054]">{event.organized_by}</span>
+                                    </td>
+                                    <td className="pl-20 px-4 py-3 whitespace-nowrap">
+                                        <span className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                                            {event.cat_id}
+                                        </span>
+                                    </td>
+                                    <td className="pl-14 px-4 py-3 whitespace-nowrap">
+                                        <span className="text-[14px] font-medium text-[#101828]">{event.count}</span>
+                                    </td>
+                                </tr>
+                            ))
                         )}
                     </tbody>
                 </table>

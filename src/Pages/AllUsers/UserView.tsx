@@ -5,7 +5,7 @@ import {
     ArrowLeft, User, Mail, Phone, MapPin, Calendar,
     Briefcase, Heart, Globe, Star, GraduationCap,
     Dumbbell, Cigarette, Wine, Baby, DollarSign,
-    Ticket, ThumbsUp, Crown, Info,
+    Crown, Info,
 } from "lucide-react";
 import Tags from "../../Components/Tags";
 import type {
@@ -340,20 +340,8 @@ export default function UserView() {
                             </p>
 
                             {/* Stats row */}
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2 border-t border-gray-100">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-2 border-t border-gray-100">
                                 {[
-                                    {
-                                        icon: <ThumbsUp size={15} className="text-pink-500" />,
-                                        bg: "bg-pink-50",
-                                        label: "Likes",
-                                        value: "N/A",
-                                    },
-                                    {
-                                        icon: <Ticket size={15} className="text-blue-500" />,
-                                        bg: "bg-blue-50",
-                                        label: "Tickets",
-                                        value: "N/A",
-                                    },
                                     {
                                         icon: <Crown size={15} className="text-amber-500" />,
                                         bg: "bg-amber-50",

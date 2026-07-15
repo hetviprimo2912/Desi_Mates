@@ -1,4 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import type {
+    RootState,
+    AppDispatch,
+} from "../../Store/store";
 import { ChevronDown, Download, Flag, Users, AlertTriangle, TrendingUp } from "lucide-react";
 import StatsCard from "../../Components/StatsCard";
 import Search from "../../Components/Search";
@@ -6,48 +12,35 @@ import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
 import Action from "../../Components/Action";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
-
-interface Report {
-    id: number;
-    fromUserName: string;
-    toUserName: string;
-    reportText: string;
-}
-
-const initialReports: Report[] = [
-    { id: 1, fromUserName: "John Doe", toUserName: "Emma Watson", reportText: "Inappropriate behavior" },
-    { id: 2, fromUserName: "Rahul Sharma", toUserName: "Priya Patel", reportText: "Spam messages" },
-    { id: 3, fromUserName: "David Miller", toUserName: "Sophia Brown", reportText: "Fake profile" },
-    { id: 4, fromUserName: "Arjun Singh", toUserName: "Ananya Mehta", reportText: "Harassment" },
-    { id: 5, fromUserName: "Karan Kapoor", toUserName: "Neha Gupta", reportText: "Offensive content" },
-    { id: 6, fromUserName: "Vikram Nair", toUserName: "Pooja Iyer", reportText: "Scam attempt" },
-    { id: 7, fromUserName: "Rohan Verma", toUserName: "Simran Kaur", reportText: "Abusive language" },
-];
-
-const reportStats = [
-    { label: "Total Reports", value: "7", sub: "All time reports", icon: <Flag size={24} className="text-red-600" />, bg: "bg-red-50" },
-    { label: "Total Users", value: "14", sub: "Users involved", icon: <Users size={24} className="text-blue-600" />, bg: "bg-blue-50" },
-    { label: "This Month", value: "3", sub: "New reports this month", icon: <AlertTriangle size={24} className="text-yellow-600" />, bg: "bg-yellow-50" },
-    { label: "Resolved", value: "68%", sub: "Reports resolved", icon: <TrendingUp size={24} className="text-green-600" />, bg: "bg-green-50" },
-];
+import { report_list } from "../../Store/slices/ReportSlices/report_list_thunk";
+import { report_card } from "../../Store/slices/ReportSlices/report_card_thunk";
+import { delete_report } from "../../Store/slices/ReportSlices/delete_report_thunk";
 
 export default function AllReports() {
-    const [reports, setReports] = useState<Report[]>(initialReports);
+    const dispatch = useDispatch<AppDispatch>();
+
+    const {
+        reports,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.report_list
+    );
+
+    const {
+        cards,
+    } = useSelector(
+        (state: RootState) => state.report_card
+    );
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedReports, setSelectedReports] = useState<Set<number>>(new Set());
     const [isExportOpen, setIsExportOpen] = useState(false);
-    const [reportToDelete, setReportToDelete] = useState<number | null>(null);
+    const [reportToDelete, setReportToDelete] =
+        useState<any>(null);
     const exportRef = useRef<HTMLDivElement | null>(null);
-
-    const filteredReports = reports.filter(r =>
-        r.fromUserName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.toUserName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        r.reportText.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const paginatedReports = filteredReports.slice(startIndex, startIndex + rowsPerPage);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -57,28 +50,149 @@ export default function AllReports() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+    useEffect(() => {
+
+        const timer = setTimeout(() => {
+
+            setDebouncedSearch(searchTerm);
+
+        }, 1000);
+
+        return () => clearTimeout(timer);
+
+    }, [searchTerm]);
+
+    useEffect(() => {
+
+        setCurrentPage(1);
+
+    }, [debouncedSearch]);
+    useEffect(() => {
+
+        dispatch(
+            report_list({
+
+                search: debouncedSearch,
+
+                page_no: currentPage,
+
+                per_page: rowsPerPage
+
+            })
+        );
+
+    }, [
+        dispatch,
+        debouncedSearch,
+        currentPage,
+        rowsPerPage
+    ]);
+    useEffect(() => {
+
+        dispatch(report_card());
+
+    }, [dispatch]);
 
     const handleSelectAll = (checked: boolean) => {
-        setSelectedReports(checked ? new Set(paginatedReports.map((_, i) => i)) : new Set());
+
+        setSelectedReports(
+
+            checked
+                ? new Set(reports.map(report => report.id))
+                : new Set()
+
+        );
+
     };
 
-    const handleSelectReport = (index: number, checked: boolean) => {
+    const handleSelectReport = (id: number, checked: boolean) => {
+
         const updated = new Set(selectedReports);
-        checked ? updated.add(index) : updated.delete(index);
-        setSelectedReports(updated);
-    };
 
-    const handleDelete = () => {
-        if (reportToDelete !== null) {
-            setReports(prev => prev.filter(r => r.id !== reportToDelete));
+        if (checked) {
+
+            updated.add(id);
+
+        } else {
+
+            updated.delete(id);
+
+        }
+
+        setSelectedReports(updated);
+
+    };
+    const handleDelete = async () => {
+
+        if (!reportToDelete) return;
+
+        const result = await dispatch(
+            delete_report({
+                id: reportToDelete.id,
+            })
+        );
+
+        if (delete_report.fulfilled.match(result)) {
+
+            dispatch(
+                report_list({
+                    search: debouncedSearch,
+                    page_no: currentPage,
+                    per_page: rowsPerPage,
+                })
+            );
+
+            dispatch(report_card());
+
+            setSelectedReports(new Set());
+
             setReportToDelete(null);
         }
     };
+    const isAllSelected =
 
-    const isAllSelected = paginatedReports.length > 0 && paginatedReports.every((_, i) => selectedReports.has(i));
-    const isIndeterminate = paginatedReports.some((_, i) => selectedReports.has(i)) && !isAllSelected;
+        reports.length > 0 &&
+        reports.every(report => selectedReports.has(report.id));
 
+    const isIndeterminate =
+
+        reports.some(report => selectedReports.has(report.id))
+        && !isAllSelected;
+    const reportStats = [
+
+        {
+            label: "Total Reports",
+            value: String(cards?.total_reports ?? 0),
+            sub: "All time reports",
+            icon: <Flag size={24} className="text-red-600" />,
+            bg: "bg-red-50"
+        },
+
+        {
+            label: "Total Users",
+            value: String(cards?.total_users ?? 0),
+            sub: "Users involved",
+            icon: <Users size={24} className="text-blue-600" />,
+            bg: "bg-blue-50"
+        },
+
+        {
+            label: "This Month",
+            value: String(cards?.this_month ?? 0),
+            sub: "New reports this month",
+            icon: <AlertTriangle size={24} className="text-yellow-600" />,
+            bg: "bg-yellow-50"
+        },
+
+        {
+            label: "Resolved",
+            value: String(cards?.resolved ?? 0),
+            sub: "Reports resolved",
+            icon: <TrendingUp size={24} className="text-green-600" />,
+            bg: "bg-green-50"
+        }
+
+    ];
     return (
         <div className="w-full min-h-screen text-[#111827]">
             <div className="px-4 sm:px-8 pt-4 pb-12">
@@ -104,7 +218,7 @@ export default function AllReports() {
                             {isExportOpen && (
                                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
                                     <button
-                                        onClick={() => { console.table(filteredReports); setIsExportOpen(false); }}
+                                        onClick={() => { console.table(reports); setIsExportOpen(false); }}
                                         className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                                     >
                                         Export as PDF
@@ -116,7 +230,24 @@ export default function AllReports() {
                 </div>
 
                 {/* Stats */}
-                <StatsCard stats={reportStats} cols={4} />
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+                                    <div className="flex-1">
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <StatsCard stats={reportStats} cols={4} />
+                )}
 
                 {/* Table */}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
@@ -134,41 +265,56 @@ export default function AllReports() {
                                 onSelectAll={handleSelectAll}
                             />
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedReports.map((report, idx) => (
+                                {loading ? (
+                                    [...Array(rowsPerPage)].map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td className="px-4 py-5"><div className="h-4 w-4 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-36 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-36 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-56 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="flex justify-center"><div className="h-8 w-16 rounded bg-gray-200" /></div></td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <>
+                                        {reports.map((report) => (
                                     <tr key={report.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="px-4 py-4">
                                             <input
                                                 type="checkbox"
-                                                checked={selectedReports.has(idx)}
-                                                onChange={e => handleSelectReport(idx, e.target.checked)}
+                                                checked={selectedReports.has(report.id)}
+
+                                                onChange={(e) => handleSelectReport(report.id, e.target.checked)}
                                                 className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
                                             />
                                         </td>
                                         <td className="pl-18 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{report.fromUserName}</p>
+                                            <p className="text-[15px] font-medium text-[#111827]">{report.from_user_name}</p>
                                         </td>
                                         <td className="pl-16 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{report.toUserName}</p>
+                                            <p className="text-[15px] font-medium text-[#111827]">{report.to_user_name}</p>
                                         </td>
                                         <td className="pl-100 px-4 py-5">
-                                            <p className="text-[15px] text-[#374151]">{report.reportText}</p>
+                                            <p className="text-[15px] text-[#374151]">{report.report_reason}</p>
                                         </td>
                                         <td className="px-4 py-5 text-center whitespace-nowrap">
                                             <Action
                                                 showView={false}
                                                 showEdit={false}
                                                 showDelete={true}
-                                                onDelete={() => setReportToDelete(report.id)}
+                                                onDelete={() => setReportToDelete(report)}
                                             />
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredReports.length === 0 && (
-                                    <tr>
-                                        <td colSpan={5} className="py-10 text-center text-gray-400 italic">
-                                            No reports found.
-                                        </td>
-                                    </tr>
+                                        {!loading && reports.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="py-10 text-center text-gray-400 italic">
+                                                    No reports found.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 )}
                             </tbody>
                         </table>
@@ -178,7 +324,7 @@ export default function AllReports() {
                 {/* Pagination */}
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(1, Math.ceil(filteredReports.length / rowsPerPage))}
+                    totalPages={pagination?.last_page ?? 1}
                     rowsPerPage={rowsPerPage}
                     onPageChange={page => setCurrentPage(page)}
                     onRowsPerPageChange={rows => { setRowsPerPage(rows); setCurrentPage(1); }}

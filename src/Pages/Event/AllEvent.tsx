@@ -12,6 +12,8 @@ import type { AppDispatch, RootState } from "../../Store/store";
 
 import { event_list } from "../../Store/slices/EventSlices/event_list_thunk";
 import { event_card } from "../../Store/slices/EventSlices/event_card_thunk";
+import { delete_event } from "../../Store/slices/EventSlices/delete_event_thunk";
+import { resetDeleteEvent } from "../../Store/slices/EventSlices/delete_event_slice";
 
 import type { EventItem } from "../../Types/EventTypes/event_list_types";
 
@@ -27,6 +29,8 @@ export default function AllEvent() {
     const {
         data: cardData,
     } = useSelector((state: RootState) => state.event_card);
+
+    const { loading: deleteLoading } = useSelector((state: RootState) => state.delete_event);
     const [searchTerm, setSearchTerm] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
@@ -74,10 +78,11 @@ export default function AllEvent() {
     const isAllSelected = paginatedEvents.length > 0 && paginatedEvents.every((_, i) => selectedEvents.has(i));
     const isIndeterminate = paginatedEvents.some((_, i) => selectedEvents.has(i)) && !isAllSelected;
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
         if (!eventToDelete) return;
-        // TODO:
-        // Call delete API here
+        await dispatch(delete_event({ id: eventToDelete.id }));
+        dispatch(resetDeleteEvent());
+        dispatch(event_list({ search: searchTerm, page_no: currentPage, per_page: rowsPerPage }));
         setSelectedEvents(new Set());
         setEventToDelete(null);
         setIsDeleteModalOpen(false);
@@ -91,6 +96,7 @@ export default function AllEvent() {
                     <CategoriesDeleteModal
                         onClose={() => { setIsDeleteModalOpen(false); setEventToDelete(null); }}
                         onConfirm={handleDelete}
+                        loading={deleteLoading}
                     />
                 )}
 
@@ -127,39 +133,56 @@ export default function AllEvent() {
                 </div>
 
                 {/* Stats */}
-                <StatsCard
-                    cols={4}
-                    stats={[
-                        {
-                            label: "Total Events",
-                            value: cardData?.total_events || "0",
-                            sub: "All listed events",
-                            icon: <CalendarDays size={24} className="text-blue-600" />,
-                            bg: "bg-blue-50",
-                        },
-                        {
-                            label: "Total Joined",
-                            value: cardData?.total_joined || "0",
-                            sub: "Across all events",
-                            icon: <Users size={24} className="text-green-600" />,
-                            bg: "bg-green-50",
-                        },
-                        {
-                            label: "Categories",
-                            value: cardData?.total_category || "0",
-                            sub: "Unique event categories",
-                            icon: <Tag size={24} className="text-purple-600" />,
-                            bg: "bg-purple-50",
-                        },
-                        {
-                            label: "Most Popular",
-                            value: cardData?.most_popular || "-",
-                            sub: "",
-                            icon: <TrendingUp size={24} className="text-orange-600" />,
-                            bg: "bg-orange-50",
-                        },
-                    ]}
-                />
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+                        {[...Array(4)].map((_, index) => (
+                            <div key={index} className="bg-white border border-gray-200 rounded-xl p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+                                    <div className="flex-1">
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <StatsCard
+                        cols={4}
+                        stats={[
+                            {
+                                label: "Total Events",
+                                value: cardData?.total_events || "0",
+                                sub: "All listed events",
+                                icon: <CalendarDays size={24} className="text-blue-600" />,
+                                bg: "bg-blue-50",
+                            },
+                            {
+                                label: "Total Joined",
+                                value: cardData?.total_joined || "0",
+                                sub: "Across all events",
+                                icon: <Users size={24} className="text-green-600" />,
+                                bg: "bg-green-50",
+                            },
+                            {
+                                label: "Categories",
+                                value: cardData?.total_category || "0",
+                                sub: "Unique event categories",
+                                icon: <Tag size={24} className="text-purple-600" />,
+                                bg: "bg-purple-50",
+                            },
+                            {
+                                label: "Most Popular",
+                                value: cardData?.most_popular || "-",
+                                sub: "",
+                                icon: <TrendingUp size={24} className="text-orange-600" />,
+                                bg: "bg-orange-50",
+                            },
+                        ]}
+                    />
+                )}
 
                 {/* Table */}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
@@ -180,7 +203,22 @@ export default function AllEvent() {
                                 onSelectAll={handleSelectAll}
                             />
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedEvents.map((event, idx) => (
+                                {loading ? (
+                                    [...Array(rowsPerPage)].map((_, index) => (
+                                        <tr key={index} className="animate-pulse">
+                                            <td className="px-4 py-5"><div className="h-4 w-4 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="w-12 h-12 rounded-lg bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-36 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-32 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-24 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-12 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="flex justify-center"><div className="h-8 w-16 rounded bg-gray-200" /></div></td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <>
+                                    {paginatedEvents.map((event, idx) => (
                                     <tr key={event.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="pl-8 px-4 py-4">
                                             <input
@@ -221,13 +259,15 @@ export default function AllEvent() {
                                             />
                                         </td>
                                     </tr>
-                                ))}
-                                {!loading && events.length === 0 && (
-                                    <tr>
-                                        <td colSpan={8} className="py-10 text-center text-gray-400 italic">
-                                            No events found.
-                                        </td>
-                                    </tr>
+                                    ))}
+                                    {!loading && events.length === 0 && (
+                                        <tr>
+                                            <td colSpan={8} className="py-10 text-center text-gray-400 italic">
+                                                No events found.
+                                            </td>
+                                        </tr>
+                                    )}
+                                    </>
                                 )}
                             </tbody>
                         </table>

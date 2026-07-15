@@ -17,6 +17,7 @@ import religionListReducer from "./slices/ReligionSlices/religion_list_slice";
 import userCardsReducer from "./slices/UsersSlice/user_cards_slice";
 import userProfileReducer from "./slices/UsersSlice/user_profile_slice";
 import user_delete from "./slices/UsersSlice/user_delete_slice";
+import subscriberUserProfileReducer from "./slices/UsersSlice/subscriber_user_profile_slice";
 import subscriberUserListReducer from "./slices/SubscribesUsersSlice/subscriber_user_list_slice";
 import subscriberUserCardReducer from "./slices/SubscribesUsersSlice/subscriber_user_card_slice";
 import toggle_category from "./slices/CategorySlices/toggle_category_slice";
@@ -32,6 +33,28 @@ import event_list from "./slices/EventSlices/event_list_slice";
 import event_card from "./slices/EventSlices/event_card_slice";
 import event_add from "./slices/EventSlices/event_add_slice";
 import edit_event from "./slices/EventSlices/edit_event_slice";
+import event_view from "./slices/EventSlices/event_view_slice";
+import delete_event from "./slices/EventSlices/delete_event_slice";
+import add_event_manager from "./slices/MangerSlices/add_event_manager_slice";
+import edit_event_manager from "./slices/MangerSlices/edit_event_manager_slice";
+import settings from "./slices/SettingsSlice/settings_slice";
+import eventManagerListReducer from "./slices/MangerSlices/event_manager_list_slice";
+import eventManagerCardReducer from "./slices/MangerSlices/event_manager_card_slice";
+import deleteEventManagerReducer from "./slices/MangerSlices/delete_event_manager_slice";
+import adminTicketListReducer from "./slices/TicketSlices/admin_ticket_list_slice";
+import ticketCardReducer from "./slices/TicketSlices/ticket_card_slice";
+import deleteTicketReducer from "./slices/TicketSlices/delete_ticket_slice";
+import paymentUserListReducer from "./slices/PaymentSlices/payment_user_list_slice";
+import paymentCardReducer from "./slices/PaymentSlices/payment_card_slice";
+import deletePaymentReducer from "./slices/PaymentSlices/delete_payment_slice";
+import matchesUserListReducer from "./slices/MatchesSlices/matches_user_list_slice";
+import matchesCardReducer from "./slices/MatchesSlices/matches_card_slice";
+import reportListReducer from "./slices/ReportSlices/report_list_slice";
+import reportCardReducer from "./slices/ReportSlices/report_card_slice";
+import deleteReportReducer from "./slices/ReportSlices/delete_report_slice";
+import addReportReducer from "./slices/ReportSlices/add_report_slice";
+import usernameListReducer from "./slices/ReportSlices/username_list_slice";
+import dashboardReducer from "./slices/DashboardSlices/dashboard_slice";
 
 export const store = configureStore({
   reducer: {
@@ -41,6 +64,7 @@ export const store = configureStore({
     user_cards: userCardsReducer,
     user_profile: userProfileReducer,
     user_delete,
+    subscriber_user_profile: subscriberUserProfileReducer,
 
     category_list: allCategoryListReducer,
     category_card,
@@ -74,6 +98,34 @@ export const store = configureStore({
     event_card,
     event_add,
     edit_event,
+    event_view,
+    delete_event,
+    add_event_manager,
+    edit_event_manager,
+    settings,
+
+    event_manager_list: eventManagerListReducer,
+    event_manager_card: eventManagerCardReducer,
+    delete_event_manager: deleteEventManagerReducer,
+
+    admin_ticket_list: adminTicketListReducer,
+    ticket_card: ticketCardReducer,
+    delete_ticket: deleteTicketReducer,
+
+    payment_user_list: paymentUserListReducer,
+    payment_card: paymentCardReducer,
+    delete_payment: deletePaymentReducer,
+
+    matches_user_list: matchesUserListReducer,
+    matches_card: matchesCardReducer,
+
+    report_list: reportListReducer,
+    report_card: reportCardReducer,
+    delete_report: deleteReportReducer,
+    add_report: addReportReducer,
+    username_list: usernameListReducer,
+
+    dashboard: dashboardReducer,
   },
 });
 

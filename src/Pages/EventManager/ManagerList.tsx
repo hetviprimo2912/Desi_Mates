@@ -1,4 +1,7 @@
 import { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import type { RootState, AppDispatch } from "../../Store/store";
 import { ChevronDown, Download, Users, UserCheck, UserPlus, TrendingUp, Eye, EyeOff } from "lucide-react";
 import StatsCard from "../../Components/StatsCard";
 import Search from "../../Components/Search";
@@ -6,28 +9,9 @@ import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
 import Action from "../../Components/Action";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
-
-interface Manager {
-    id: number;
-    name: string;
-    email: string;
-    password: string;
-}
-
-const initialManagers: Manager[] = [
-    { id: 1, name: "Amit Sharma", email: "amit@desimates.com", password: "Admin@123" },
-    { id: 2, name: "Priya Patel", email: "priya@desimates.com", password: "Priya@456" },
-    { id: 3, name: "Rahul Verma", email: "rahul@desimates.com", password: "Rahul@789" },
-    { id: 4, name: "Sneha Iyer", email: "sneha@desimates.com", password: "Sneha@321" },
-    { id: 5, name: "Karan Mehta", email: "karan@desimates.com", password: "Karan@654" },
-];
-
-const managerStats = [
-    { label: "Total Managers", value: "5", sub: "All managers", icon: <Users size={24} className="text-blue-600" />, bg: "bg-blue-50" },
-    { label: "Active Managers", value: "4", sub: "Currently active", icon: <UserCheck size={24} className="text-green-600" />, bg: "bg-green-50" },
-    { label: "New This Month", value: "2", sub: "Added this month", icon: <UserPlus size={24} className="text-purple-600" />, bg: "bg-purple-50" },
-    { label: "Events Managed", value: "18", sub: "Total events handled", icon: <TrendingUp size={24} className="text-yellow-600" />, bg: "bg-yellow-50" },
-];
+import { event_manager_list } from "../../Store/slices/MangerSlices/event_manager_list_thunk";
+import { event_manager_card } from "../../Store/slices/MangerSlices/event_manager_card_thunk";
+import { delete_event_manager } from "../../Store/slices/MangerSlices/delete_event_manager_thunk";
 
 function PasswordCell({ password }: { password: string }) {
     const [visible, setVisible] = useState(false);
@@ -44,21 +28,36 @@ function PasswordCell({ password }: { password: string }) {
 }
 
 export default function ManagerList() {
-    const [managers, setManagers] = useState<Manager[]>(initialManagers);
+    const dispatch = useDispatch<AppDispatch>();
+    const navigate = useNavigate();
+
+    const {
+        event_manager,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.event_manager_list
+    );
+
+    const {
+        data: cardData,
+    } = useSelector(
+        (state: RootState) => state.event_manager_card
+    );
+
+    const {
+        loading: deleteLoading,
+    } = useSelector(
+        (state: RootState) => state.delete_event_manager
+    );
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedManagers, setSelectedManagers] = useState<Set<number>>(new Set());
     const [isExportOpen, setIsExportOpen] = useState(false);
-    const [managerToDelete, setManagerToDelete] = useState<number | null>(null);
+    const [managerToDelete, setManagerToDelete] = useState<string | null>(null);
     const exportRef = useRef<HTMLDivElement | null>(null);
-
-    const filteredManagers = managers.filter(m =>
-        m.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        m.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const paginatedManagers = filteredManagers.slice(startIndex, startIndex + rowsPerPage);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -69,9 +68,35 @@ export default function ManagerList() {
     }, []);
 
     useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 1000);
 
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch]);
+    useEffect(() => {
+        dispatch(
+            event_manager_list({
+                search: debouncedSearch,
+                page_no: currentPage,
+                per_page: rowsPerPage,
+            })
+        );
+    }, [dispatch, debouncedSearch, currentPage, rowsPerPage]);
+    useEffect(() => {
+        dispatch(event_manager_card());
+    }, [dispatch]);
     const handleSelectAll = (checked: boolean) => {
-        setSelectedManagers(checked ? new Set(paginatedManagers.map((_, i) => i)) : new Set());
+        setSelectedManagers(
+            checked
+                ? new Set(event_manager.map((_, i) => i))
+                : new Set()
+        );
     };
 
     const handleSelectManager = (index: number, checked: boolean) => {
@@ -80,16 +105,66 @@ export default function ManagerList() {
         setSelectedManagers(updated);
     };
 
-    const handleDelete = () => {
-        if (managerToDelete !== null) {
-            setManagers(prev => prev.filter(m => m.id !== managerToDelete));
+    const handleDelete = async () => {
+        if (!managerToDelete) return;
+
+        const result = await dispatch(
+            delete_event_manager({
+                id: managerToDelete,
+            })
+        );
+
+        if (delete_event_manager.fulfilled.match(result)) {
             setManagerToDelete(null);
+
+            dispatch(
+                event_manager_list({
+                    search: debouncedSearch,
+                    page_no: currentPage,
+                    per_page: rowsPerPage,
+                })
+            );
+
+            dispatch(event_manager_card());
         }
     };
+    const isAllSelected =
+        event_manager.length > 0 &&
+        event_manager.every((_, i) => selectedManagers.has(i));
 
-    const isAllSelected = paginatedManagers.length > 0 && paginatedManagers.every((_, i) => selectedManagers.has(i));
-    const isIndeterminate = paginatedManagers.some((_, i) => selectedManagers.has(i)) && !isAllSelected;
-
+    const isIndeterminate =
+        event_manager.some((_, i) => selectedManagers.has(i)) &&
+        !isAllSelected;
+    const managerStats = [
+        {
+            label: "Total Managers",
+            value: cardData?.total_managers ?? "0",
+            sub: "All managers",
+            icon: <Users size={24} className="text-blue-600" />,
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Active Managers",
+            value: cardData?.active_managers ?? "0",
+            sub: "Currently active",
+            icon: <UserCheck size={24} className="text-green-600" />,
+            bg: "bg-green-50",
+        },
+        {
+            label: "New This Month",
+            value: cardData?.new_this_month ?? "0",
+            sub: "Added this month",
+            icon: <UserPlus size={24} className="text-purple-600" />,
+            bg: "bg-purple-50",
+        },
+        {
+            label: "Events Managed",
+            value: cardData?.total_events ?? "0",
+            sub: "Total events handled",
+            icon: <TrendingUp size={24} className="text-yellow-600" />,
+            bg: "bg-yellow-50",
+        },
+    ];
     return (
         <div className="w-full min-h-screen text-[#111827]">
             <div className="px-4 sm:px-8 pt-4 pb-12">
@@ -115,7 +190,7 @@ export default function ManagerList() {
                             {isExportOpen && (
                                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
                                     <button
-                                        onClick={() => { console.table(filteredManagers); setIsExportOpen(false); }}
+                                        onClick={() => { console.table(event_manager); setIsExportOpen(false); }}
                                         className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                                     >
                                         Export as PDF
@@ -127,7 +202,24 @@ export default function ManagerList() {
                 </div>
 
                 {/* Stats */}
-                <StatsCard stats={managerStats} cols={4} />
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+                        {[...Array(4)].map((_, index) => (
+                            <div key={index} className="bg-white border border-gray-200 rounded-xl p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+                                    <div className="flex-1">
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <StatsCard stats={managerStats} cols={4} />
+                )}
 
                 {/* Table */}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
@@ -145,7 +237,19 @@ export default function ManagerList() {
                                 onSelectAll={handleSelectAll}
                             />
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedManagers.map((manager, idx) => (
+                                {loading ? (
+                                    [...Array(rowsPerPage)].map((_, index) => (
+                                        <tr key={index} className="animate-pulse">
+                                            <td className="px-4 py-5"><div className="h-4 w-4 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-36 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-48 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-28 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="flex justify-center"><div className="h-8 w-16 rounded bg-gray-200" /></div></td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <>
+                                        {event_manager.map((manager, idx) => (
                                     <tr key={manager.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="pl-14 px-4 py-4">
                                             <input
@@ -155,10 +259,10 @@ export default function ManagerList() {
                                                 className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
                                             />
                                         </td>
-                                        <td className="pl-40 px-4 py-5 whitespace-nowrap">
+                                        <td className="pl-34 px-4 py-5 whitespace-nowrap">
                                             <p className="text-[15px] font-medium text-[#111827]">{manager.name}</p>
                                         </td>
-                                        <td className="pl-38 px-4 py-5 whitespace-nowrap">
+                                        <td className="pl-44 px-4 py-5 whitespace-nowrap">
                                             <p className="text-[15px] text-[#374151]">{manager.email}</p>
                                         </td>
                                         <td className="pl-34 px-4 py-5 whitespace-nowrap">
@@ -169,19 +273,20 @@ export default function ManagerList() {
                                                 showView={false}
                                                 showEdit={true}
                                                 showDelete={true}
-                                             
-                                                onEdit={() => console.log("Edit Manager", manager)}
+                                                onEdit={() => navigate(`/event-manager/edit/${manager.id}`)}
                                                 onDelete={() => setManagerToDelete(manager.id)}
                                             />
                                         </td>
                                     </tr>
-                                ))}
-                                {filteredManagers.length === 0 && (
-                                    <tr>
-                                        <td colSpan={5} className="py-10 text-center text-gray-400 italic">
-                                            No managers found.
-                                        </td>
-                                    </tr>
+                                        ))}
+                                        {!loading && event_manager.length === 0 && (
+                                            <tr>
+                                                <td colSpan={5} className="py-10 text-center text-gray-400 italic">
+                                                    No managers found.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 )}
                             </tbody>
                         </table>
@@ -191,7 +296,7 @@ export default function ManagerList() {
                 {/* Pagination */}
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(1, Math.ceil(filteredManagers.length / rowsPerPage))}
+                    totalPages={pagination?.total_pages ?? 1}
                     rowsPerPage={rowsPerPage}
                     onPageChange={page => setCurrentPage(page)}
                     onRowsPerPageChange={rows => { setRowsPerPage(rows); setCurrentPage(1); }}
@@ -206,6 +311,7 @@ export default function ManagerList() {
                 <CategoriesDeleteModal
                     onClose={() => setManagerToDelete(null)}
                     onConfirm={handleDelete}
+                    loading={deleteLoading}
                 />
             )}
         </div>

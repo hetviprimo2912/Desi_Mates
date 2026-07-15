@@ -11,6 +11,7 @@ const initialState: UserProfileState = {
     error: null,
     user: null,
     about: [],
+    subscription_details: null,
 };
 
 const userProfileSlice = createSlice({
@@ -30,10 +31,9 @@ const userProfileSlice = createSlice({
 
             .addCase(user_profile.fulfilled, (state, action) => {
                 state.loading = false;
-
                 state.user = action.payload.data;
-
                 state.about = action.payload.about;
+                state.subscription_details = action.payload.subscription_details ?? null;
             })
 
             .addCase(user_profile.rejected, (state, action) => {

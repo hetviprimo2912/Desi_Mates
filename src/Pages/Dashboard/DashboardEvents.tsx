@@ -1,30 +1,24 @@
 import NewEvents from "./NewEvents";
 import GrowthOverview from "./GrowthOverview";
+import type { NewEvent, GrowthOverview as GrowthOverviewType } from "../../Types/DashboardTypes/dashboard_types";
 
-export default function DashboardEvents() {
+interface Props {
+    newEvents?: NewEvent[];
+    growthOverview?: GrowthOverviewType;
+    loading?: boolean;
+}
+
+export default function DashboardEvents({ newEvents, growthOverview, loading }: Props) {
     return (
         <div className="mt-10">
-
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
-
-                {/* New Events */}
-
                 <div className="xl:col-span-8">
-
-                    <NewEvents />
-
+                    <NewEvents events={newEvents} loading={loading} />
                 </div>
-
-                {/* Growth Overview */}
-
                 <div className="xl:col-span-4">
-
-                    <GrowthOverview />
-
+                    <GrowthOverview data={growthOverview} loading={loading} />
                 </div>
-
             </div>
-
         </div>
     );
 }

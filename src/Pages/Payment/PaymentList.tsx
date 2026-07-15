@@ -1,4 +1,10 @@
 import { useState, useRef, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+
+import type {
+    RootState,
+    AppDispatch,
+} from "../../Store/store";
 import { ChevronDown, Download, CreditCard, DollarSign, Users, TrendingUp } from "lucide-react";
 import StatsCard from "../../Components/StatsCard";
 import Search from "../../Components/Search";
@@ -6,50 +12,36 @@ import TableHeader from "../../Components/TableHeader";
 import Pagination from "../../Components/Pagination";
 import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import Action from "../../Components/Action";
-
-interface Payment {
-    id: number;
-    userName: string;
-    email: string;
-    paymentMethod: string;
-    price: number;
-    date: string;
-}
-
-const initialPayments: Payment[] = [
-    { id: 1, userName: "John Doe", email: "john@gmail.com", paymentMethod: "Credit Card", price: 49, date: "2026-07-06T19:22:00" },
-    { id: 2, userName: "Emma Watson", email: "emma@gmail.com", paymentMethod: "UPI", price: 125, date: "2026-07-05T14:10:00" },
-    { id: 3, userName: "Rahul Sharma", email: "rahul@gmail.com", paymentMethod: "Net Banking", price: 75, date: "2026-07-04T11:30:00" },
-    { id: 4, userName: "Sophia Brown", email: "sophia@gmail.com", paymentMethod: "Debit Card", price: 60, date: "2026-07-03T09:15:00" },
-    { id: 5, userName: "David Miller", email: "david@gmail.com", paymentMethod: "PayPal", price: 30, date: "2026-07-02T16:45:00" },
-    { id: 6, userName: "Priya Patel", email: "priya@gmail.com", paymentMethod: "UPI", price: 49, date: "2026-07-01T10:00:00" },
-    { id: 7, userName: "Arjun Singh", email: "arjun@gmail.com", paymentMethod: "Credit Card", price: 125, date: "2026-06-30T13:20:00" },
-];
-
-const paymentStats = [
-    { label: "Total Payments", value: "7", sub: "All transactions", icon: <CreditCard size={24} className="text-blue-600" />, bg: "bg-blue-50" },
-    { label: "Total Revenue", value: "₹513", sub: "Across all payments", icon: <DollarSign size={24} className="text-green-600" />, bg: "bg-green-50" },
-    { label: "Unique Users", value: "7", sub: "Users who paid", icon: <Users size={24} className="text-purple-600" />, bg: "bg-purple-50" },
-    { label: "This Month", value: "₹388", sub: "Revenue this month", icon: <TrendingUp size={24} className="text-orange-600" />, bg: "bg-orange-50" },
-];
+import { payment_user_list } from "../../Store/slices/PaymentSlices/payment_user_list_thunk";
+import { payment_card } from "../../Store/slices/PaymentSlices/payment_card_thunk";
+import { delete_payment } from "../../Store/slices/PaymentSlices/delete_payment_thunk";
 
 export default function PaymentList() {
-    const [payments, setPayments] = useState<Payment[]>(initialPayments);
+    const dispatch = useDispatch<AppDispatch>();
+
+    const {
+        users: payments,
+        pagination,
+        loading,
+    } = useSelector(
+        (state: RootState) => state.payment_user_list
+    );
+
+    const {
+        cards,
+    } = useSelector(
+        (state: RootState) => state.payment_card
+    );
     const [searchTerm, setSearchTerm] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
     const [selectedPayments, setSelectedPayments] = useState<Set<number>>(new Set());
     const [isExportOpen, setIsExportOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [paymentToDelete, setPaymentToDelete] = useState<Payment | null>(null);
+    const [paymentToDelete, setPaymentToDelete] =
+        useState<any>(null);
     const exportRef = useRef<HTMLDivElement | null>(null);
-
-    const filteredPayments = payments.filter(p =>
-        p.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.email.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    const startIndex = (currentPage - 1) * rowsPerPage;
-    const paginatedPayments = filteredPayments.slice(startIndex, startIndex + rowsPerPage);
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
@@ -59,35 +51,125 @@ export default function PaymentList() {
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    useEffect(() => { setCurrentPage(1); }, [searchTerm]);
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearch(searchTerm);
+        }, 1000);
 
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [debouncedSearch]);
+    useEffect(() => {
+
+        dispatch(
+            payment_user_list({
+                search: debouncedSearch,
+                page_no: currentPage,
+                per_page: rowsPerPage,
+            })
+        );
+
+    }, [
+        dispatch,
+        debouncedSearch,
+        currentPage,
+        rowsPerPage,
+    ]);
+    useEffect(() => {
+
+        dispatch(payment_card());
+
+    }, [dispatch]);
     const handleSelectAll = (checked: boolean) => {
-        setSelectedPayments(checked ? new Set(paginatedPayments.map((_, i) => i)) : new Set());
+        setSelectedPayments(
+            checked ? new Set(payments.map((payment) => payment.id)) : new Set()
+        );
     };
 
-    const handleSelectPayment = (index: number, checked: boolean) => {
+    const handleSelectPayment = (id: number, checked: boolean) => {
         const updated = new Set(selectedPayments);
-        checked ? updated.add(index) : updated.delete(index);
+
+        if (checked) {
+            updated.add(id);
+        } else {
+            updated.delete(id);
+        }
+
         setSelectedPayments(updated);
     };
 
-    const isAllSelected = paginatedPayments.length > 0 && paginatedPayments.every((_, i) => selectedPayments.has(i));
-    const isIndeterminate = paginatedPayments.some((_, i) => selectedPayments.has(i)) && !isAllSelected;
+    const isAllSelected =
+        payments.length > 0 &&
+        payments.every((payment) => selectedPayments.has(payment.id));
 
-    const handleDelete = () => {
+    const isIndeterminate =
+        payments.some((payment) => selectedPayments.has(payment.id)) &&
+        !isAllSelected;
+
+    const handleDelete = async () => {
+
         if (!paymentToDelete) return;
-        setPayments(prev => prev.filter(p => p.id !== paymentToDelete.id));
-        setSelectedPayments(new Set());
-        setPaymentToDelete(null);
-        setIsDeleteModalOpen(false);
+
+        const result = await dispatch(
+            delete_payment({
+                id: paymentToDelete.payment_id,
+            })
+        );
+
+        if (delete_payment.fulfilled.match(result)) {
+
+            dispatch(
+                payment_user_list({
+                    search: debouncedSearch,
+                    page_no: currentPage,
+                    per_page: rowsPerPage,
+                })
+            );
+
+            dispatch(payment_card());
+
+            setSelectedPayments(new Set());
+
+            setPaymentToDelete(null);
+
+            setIsDeleteModalOpen(false);
+        }
     };
 
-    const formatDate = (date: string) =>
-        new Date(date).toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" });
 
-    const formatTime = (date: string) =>
-        new Date(date).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
-
+    const paymentStats = [
+        {
+            label: "Total Payments",
+            value: String(cards?.total_payment ?? 0),
+            sub: "All transactions",
+            icon: <CreditCard size={24} className="text-blue-600" />,
+            bg: "bg-blue-50",
+        },
+        {
+            label: "Total Revenue",
+            value: `₹${cards?.total_revenue ?? 0}`,
+            sub: "Across all payments",
+            icon: <DollarSign size={24} className="text-green-600" />,
+            bg: "bg-green-50",
+        },
+        {
+            label: "Unique Users",
+            value: String(cards?.unique_users ?? 0),
+            sub: "Users who paid",
+            icon: <Users size={24} className="text-purple-600" />,
+            bg: "bg-purple-50",
+        },
+        {
+            label: "This Month",
+            value: `₹${cards?.this_month_revenue ?? 0}`,
+            sub: "Revenue this month",
+            icon: <TrendingUp size={24} className="text-orange-600" />,
+            bg: "bg-orange-50",
+        },
+    ];
     return (
         <div className="w-full min-h-screen text-[#111827]">
             <div className="px-4 sm:px-8 pt-4 pb-12">
@@ -120,7 +202,7 @@ export default function PaymentList() {
                             {isExportOpen && (
                                 <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-200 rounded-xl shadow-lg z-20">
                                     <button
-                                        onClick={() => { console.table(filteredPayments); setIsExportOpen(false); }}
+                                        onClick={() => { console.table(payments); setIsExportOpen(false); }}
                                         className="w-full px-4 py-3 text-left text-sm hover:bg-gray-50"
                                     >
                                         Export as PDF
@@ -132,7 +214,24 @@ export default function PaymentList() {
                 </div>
 
                 {/* Stats */}
-                <StatsCard stats={paymentStats} cols={4} />
+                {loading ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 mb-7 animate-pulse">
+                        {[...Array(4)].map((_, i) => (
+                            <div key={i} className="bg-white border border-gray-200 rounded-xl p-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-14 h-14 rounded-xl bg-gray-200" />
+                                    <div className="flex-1">
+                                        <div className="h-4 w-28 rounded bg-gray-200" />
+                                        <div className="h-8 w-20 rounded bg-gray-200 mt-3" />
+                                        <div className="h-3 w-24 rounded bg-gray-100 mt-3" />
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <StatsCard stats={paymentStats} cols={4} />
+                )}
 
                 {/* Table */}
                 <div className="bg-white border border-gray-200 rounded-[10px] overflow-hidden">
@@ -144,7 +243,7 @@ export default function PaymentList() {
                                     { label: "Email", width: "220px" },
                                     { label: "Payment Method", width: "180px" },
                                     { label: "Price", width: "120px" },
-                                    { label: "Date", width: "180px" },
+
                                     { label: "Action", width: "100px", className: "text-center" },
                                 ]}
                                 isAllSelected={isAllSelected}
@@ -152,7 +251,20 @@ export default function PaymentList() {
                                 onSelectAll={handleSelectAll}
                             />
                             <tbody className="divide-y divide-gray-100">
-                                {paginatedPayments.map((payment, idx) => (
+                                {loading ? (
+                                    [...Array(rowsPerPage)].map((_, i) => (
+                                        <tr key={i} className="animate-pulse">
+                                            <td className="px-4 py-5"><div className="h-4 w-4 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-36 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-48 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-32 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="h-4 w-20 rounded bg-gray-200" /></td>
+                                            <td className="px-4 py-5"><div className="flex justify-center"><div className="h-8 w-16 rounded bg-gray-200" /></div></td>
+                                        </tr>
+                                    ))
+                                ) : (
+                                    <>
+                                        {payments.map((payment, idx) => (
                                     <tr key={payment.id} className="hover:bg-gray-50 transition-colors">
                                         <td className="pl-12 px-4 py-4">
                                             <input
@@ -162,24 +274,19 @@ export default function PaymentList() {
                                                 className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
                                             />
                                         </td>
-                                        <td className="pl-14 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{payment.userName}</p>
-                                        </td>
                                         <td className="pl-26 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[15px] font-medium text-[#111827]">{payment.name}</p>
+                                        </td>
+                                        <td className="pl-60 px-4 py-5 whitespace-nowrap">
                                             <p className="text-[14px] text-gray-600">{payment.email}</p>
                                         </td>
                                         <td className="pl-22 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] text-gray-700">{payment.paymentMethod}</p>
+                                            <p className="text-[14px] text-gray-700">{payment.payment_method}</p>
                                         </td>
                                         <td className="pl-20 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] font-medium text-[#111827]">₹{payment.price}</p>
+                                            <p className="text-[14px] font-medium text-[#111827]">{payment.price}</p>
                                         </td>
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-                                            <div className="flex flex-col">
-                                                <span className="text-[15px] font-medium text-[#111827]">{formatDate(payment.date)}</span>
-                                                <span className="text-[14px] text-gray-500 mt-1">{formatTime(payment.date)}</span>
-                                            </div>
-                                        </td>
+
                                         <td className="px-4 py-5 text-center whitespace-nowrap">
                                             <Action
                                                 showView={false}
@@ -190,12 +297,14 @@ export default function PaymentList() {
                                         </td>
                                     </tr>
                                 ))}
-                                {filteredPayments.length === 0 && (
-                                    <tr>
-                                        <td colSpan={7} className="py-10 text-center text-gray-400 italic">
-                                            No payments found.
-                                        </td>
-                                    </tr>
+                                        {!loading && payments.length === 0 && (
+                                            <tr>
+                                                <td colSpan={7} className="py-10 text-center text-gray-400 italic">
+                                                    No payments found.
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 )}
                             </tbody>
                         </table>
@@ -205,7 +314,7 @@ export default function PaymentList() {
                 {/* Pagination */}
                 <Pagination
                     currentPage={currentPage}
-                    totalPages={Math.max(1, Math.ceil(filteredPayments.length / rowsPerPage))}
+                    totalPages={pagination?.last_page ?? 1}
                     rowsPerPage={rowsPerPage}
                     onPageChange={page => setCurrentPage(page)}
                     onRowsPerPageChange={rows => { setRowsPerPage(rows); setCurrentPage(1); }}
