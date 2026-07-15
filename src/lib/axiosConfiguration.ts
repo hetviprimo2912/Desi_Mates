@@ -22,7 +22,7 @@ api.interceptors.response.use(
     if (error.response?.status === 401) {
       Cookies.remove("desimates_admin_token");
 
-      window.location.href = "/";
+      window.location.href = "/admin/login";
     }
 
     return Promise.reject(error);
