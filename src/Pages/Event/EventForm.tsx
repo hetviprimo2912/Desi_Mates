@@ -6,32 +6,25 @@ import { useNavigate, useParams } from "react-router-dom";
 import type { AppDispatch, RootState } from "../../Store/store";
 
 import { event_add } from "../../Store/slices/EventSlices/event_add_thunk";
+import { edit_event } from "../../Store/slices/EventSlices/edit_event_thunk";
 import { resetEventAddState } from "../../Store/slices/EventSlices/event_add_slice";
 import { all_category_list } from "../../Store/slices/CategorySlices/all_category_list_thunk";
-
-import { get_event_details } from "../../Store/slices/EventSlices/get_event_details_thunk"
+import { get_event_details } from "../../Store/slices/EventSlices/get_event_details_thunk";
+import { event_list } from "../../Store/slices/EventSlices/event_list_thunk";
 import CustomSelect from "../../Components/CustomSelect";
 export default function EventForm() {
     const dispatch = useDispatch<AppDispatch>();
     const navigate = useNavigate();
     const { id } = useParams();
 
-    const {
-        loading,
-        success,
-    } = useSelector((state: RootState) => state.event_add);
-    const {
-        loading: editLoading,
-        event,
-    } = useSelector(
-        (state: RootState) => state.edit_event
-    );
+    const { loading: editLoading, event } = useSelector((state: RootState) => state.edit_event);
     const {
         category: categories,
         loading: categoryLoading,
     } = useSelector(
         (state: RootState) => state.category_list
     );
+
     const [eventName, setEventName] = useState("");
     const [price, setPrice] = useState("");
     const [organizedBy, setOrganizedBy] = useState("");
@@ -42,28 +35,29 @@ export default function EventForm() {
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [preview, setPreview] = useState("");
     const [fileName, setFileName] = useState("No file chosen");
+    const [saving, setSaving] = useState(false);
+
     const categoryOptions = categories.map((item) => ({
         value: item.id,
         label: item.title,
     }));
+
+    // Reset fields when in Add mode
     useEffect(() => {
-        if (!success) return;
-
-        setEventName("");
-        setPrice("");
-        setOrganizedBy("");
-        setCategoryId("");
-        setCategoryName("");
-        setDescription("");
-        setStatus(true);
-        setSelectedImage(null);
-        setPreview("");
-        setFileName("No file chosen");
-
-        dispatch(resetEventAddState());
-
-        navigate("/event/all-event");
-    }, [success, dispatch, navigate]);
+        if (!id) {
+            setEventName("");
+            setPrice("");
+            setOrganizedBy("");
+            setCategoryId("");
+            setCategoryName("");
+            setDescription("");
+            setStatus(true);
+            setSelectedImage(null);
+            setPreview("");
+            setFileName("No file chosen");
+            dispatch(resetEventAddState());
+        }
+    }, [id, dispatch]);
     useEffect(() => {
         dispatch(
             all_category_list({
@@ -149,23 +143,48 @@ export default function EventForm() {
         setPreview(URL.createObjectURL(file));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
 
         if (!id && !selectedImage) {
             alert("Please select an event image.");
             return;
         }
-        dispatch(
-            event_add({
-                name: eventName,
-                description,
-                image: selectedImage!,
-                price,
-                organized_by: organizedBy,
-                cat_name: categoryName,
-                status: status ? 1 : 0,
-            })
-        );
+
+        setSaving(true);
+        try {
+            if (id) {
+                await dispatch(
+                    edit_event({
+                        id,
+                        name: eventName,
+                        description,
+                        price,
+                        organized_by: organizedBy,
+                        cat_name: categoryName,
+                        is_status: status ? 1 : 0,
+                        image: selectedImage ?? undefined,
+                    })
+                ).unwrap();
+            } else {
+                await dispatch(
+                    event_add({
+                        name: eventName,
+                        description,
+                        image: selectedImage!,
+                        price,
+                        organized_by: organizedBy,
+                        cat_name: categoryName,
+                        status: status ? 1 : 0,
+                    })
+                ).unwrap();
+            }
+
+            await dispatch(event_list({ search: "", page_no: 1, per_page: 1000 }));
+            navigate("/event/all-event");
+        } catch (error) {
+            console.log(error);
+            setSaving(false);
+        }
     };
     if (id && editLoading) {
 
@@ -221,9 +240,8 @@ export default function EventForm() {
                             </label>
                             <input
                                 type="text"
-                                disabled={loading}
+                                disabled={saving}
                                 value={eventName}
-
                                 onChange={e => setEventName(e.target.value)}
                                 placeholder="Enter Event Name"
                                 className="w-full h-11 rounded-[10px] border border-gray-300 px-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100"
@@ -237,7 +255,7 @@ export default function EventForm() {
                                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">₹</span>
                                 <input
                                     type="number"
-                                    disabled={loading}
+                                    disabled={saving}
                                     min={0}
                                     value={price}
                                     onChange={e => setPrice(e.target.value)}
@@ -271,17 +289,15 @@ export default function EventForm() {
                                 value={categoryId}
                                 onChange={(value) => {
                                     setCategoryId(value);
-
                                     const selectedCategory = categories.find(
                                         (item) => item.id === value
                                     );
-
                                     setCategoryName(selectedCategory?.title || "");
                                 }}
                                 options={categoryOptions}
                                 placeholder="Select Category"
                                 loading={categoryLoading}
-                                disabled={loading}
+                                disabled={saving}
                             />
                         </div>
                     </div>
@@ -292,7 +308,7 @@ export default function EventForm() {
                             Description <span className="text-red-500">*</span>
                         </label>
                         <textarea
-                            disabled={loading}
+                            disabled={saving}
                             rows={4}
                             value={description}
                             onChange={e => setDescription(e.target.value)}
@@ -312,7 +328,7 @@ export default function EventForm() {
                                     Choose Image
                                     <input
                                         type="file"
-                                        disabled={loading} accept="image/*" className="hidden" onChange={handleImageChange} />
+                                        disabled={saving} accept="image/*" className="hidden" onChange={handleImageChange} />
                                 </label>
                                 <span className="flex items-center px-4 text-gray-500 text-sm truncate">{fileName}</span>
                             </div>
@@ -338,10 +354,10 @@ export default function EventForm() {
                 </button>
                 <button
                     onClick={handleSubmit}
-                    disabled={loading}
+                    disabled={saving}
                     className="px-6 py-2 rounded-[10px] bg-[#2563EB] text-white font-medium hover:bg-[#1D4ED8] disabled:opacity-60 disabled:cursor-not-allowed text-sm"
                 >
-                    {loading
+                    {saving
                         ? id
                             ? "Updating..."
                             : "Saving..."
