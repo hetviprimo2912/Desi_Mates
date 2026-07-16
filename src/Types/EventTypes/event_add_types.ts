@@ -6,6 +6,8 @@ export interface EventAddPayload {
     organized_by: string;
     cat_name: string;
     status: number;
+    date: string;
+    time: string;
 }
 
 export interface EventAddResponse {

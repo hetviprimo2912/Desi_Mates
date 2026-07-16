@@ -16,6 +16,7 @@ export interface SubscriberUserItem {
     lookinfor: string;
     created_at: string;
     subscriber_user: string;
+    profile_pic: string | null;
 }
 
 export interface Pagination {

@@ -26,6 +26,8 @@ export const event_add = createAsyncThunk<
             formData.append("organized_by", payload.organized_by);
             formData.append("cat_name", payload.cat_name);
             formData.append("status", payload.status.toString());
+            formData.append("date", payload.date);
+            formData.append("time", payload.time);
 
             const response = await axios.post(
                 "/add_event",

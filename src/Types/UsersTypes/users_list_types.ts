@@ -15,6 +15,7 @@ export interface UserItem {
   country: string;
   approved: number;
   lookinfor: string;
+  profile_pic: string | null;
 }
 
 export interface Pagination {

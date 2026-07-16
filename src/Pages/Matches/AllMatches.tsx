@@ -255,10 +255,10 @@ export default function AllMatches() {
                                             />
                                         </td>
                                         <td className="pl-54 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{match.from_user_name}</p>
+                                            <p className="text-[15px] font-medium text-[#111827]">{match.from_user_name || "N/A"}</p>
                                         </td>
                                         <td className="pl-56 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{match.to_user_name}</p>
+                                            <p className="text-[15px] font-medium text-[#111827]">{match.to_user_name || "N/A"}</p>
                                         </td>
                                         <td className="pl-54 px-4 py-5 whitespace-nowrap">
                                             <p className="text-[14px] text-gray-600">{new Date(match.created_at).toLocaleDateString("en-US", {

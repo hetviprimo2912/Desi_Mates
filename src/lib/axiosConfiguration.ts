@@ -19,13 +19,23 @@ api.interceptors.response.use(
   (response) => response,
 
   (error) => {
-    if (error.response?.status === 401) {
+
+    const requestUrl = error.config?.url;
+
+    // Don't redirect when login itself fails
+    if (
+      error.response?.status === 401 &&
+      requestUrl !== "/login"
+    ) {
+
       Cookies.remove("desimates_admin_token");
 
       window.location.href = "/admin/login";
+
     }
 
     return Promise.reject(error);
+
   }
 );
 

@@ -55,6 +55,8 @@ import deleteReportReducer from "./slices/ReportSlices/delete_report_slice";
 import addReportReducer from "./slices/ReportSlices/add_report_slice";
 import usernameListReducer from "./slices/ReportSlices/username_list_slice";
 import dashboardReducer from "./slices/DashboardSlices/dashboard_slice";
+import user_image_delete from "./slices/UsersSlice/user_image_delete_slice";
+import user_approved from "./slices/UsersSlice/user_approved_slice";
 
 export const store = configureStore({
   reducer: {
@@ -65,6 +67,8 @@ export const store = configureStore({
     user_profile: userProfileReducer,
     user_delete,
     subscriber_user_profile: subscriberUserProfileReducer,
+    user_image_delete,
+    user_approved,
 
     category_list: allCategoryListReducer,
     category_card,

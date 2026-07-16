@@ -28,8 +28,8 @@ export const edit_event = createAsyncThunk<
             formData.append("cat_name", payload.cat_name);
             formData.append("is_status", String(payload.is_status));
 
-            formData.append("date", payload.date || "");
-            formData.append("time", payload.time || "");
+            formData.append("date", payload.date);
+            formData.append("time", payload.time);
 
             if (payload.image) {
                 formData.append("image", payload.image);

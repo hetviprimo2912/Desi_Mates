@@ -1,20 +1,25 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useEffect } from "react";
+import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
     ArrowLeft, User, Mail, Phone, MapPin, Calendar,
     Briefcase, Heart, Globe, Star, GraduationCap,
     Dumbbell, Cigarette, Wine, Baby, DollarSign,
-    Crown, Info,
+    Crown, Info, Image,
+    ZoomIn,
+    Trash2,
+    X
 } from "lucide-react";
 import Tags from "../../Components/Tags";
 import type {
     AppDispatch,
     RootState,
 } from "../../Store/store";
-
+import CategoriesDeleteModal from "../../Components/CategoriesDeleteModal";
 import { user_profile } from "../../Store/slices/UsersSlice/user_profile_thunk";
-
+import { user_image_delete } from "../../Store/slices/UsersSlice/user_image_delete_thunk";
+import { user_approved } from "../../Store/slices/UsersSlice/user_approved_thunk";
 
 interface FieldProps {
     icon?: React.ReactNode;
@@ -73,12 +78,24 @@ export default function UserView() {
     } = useSelector(
         (state: RootState) => state.user_profile
     );
+    const {
+        loading: approving,
+    } = useSelector(
+        (state: RootState) => state.user_approved
+    );
     const initials =
         user?.name
             ?.split(" ")
             .map((word) => word[0])
             .join("")
             .toUpperCase() || "N/A";
+    const [previewImage, setPreviewImage] = useState<string | null>(null);
+    const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+    const [selectedImage, setSelectedImage] =
+        useState<{
+            field: string;
+            url: string;
+        } | null>(null);
     const formatDate = (
         date?: string
     ) => {
@@ -119,6 +136,85 @@ export default function UserView() {
             : user?.have_children === "0"
                 ? "No"
                 : "N/A";
+    const profileImages = [
+        { field: "pi_1", url: user?.pi_1 },
+        { field: "pi_2", url: user?.pi_2 },
+        { field: "pi_3", url: user?.pi_3 },
+        { field: "pi_4", url: user?.pi_4 },
+        { field: "pi_5", url: user?.pi_5 },
+        { field: "pi_6", url: user?.pi_6 },
+        { field: "pi_7", url: user?.pi_7 },
+        { field: "pi_8", url: user?.pi_8 },
+    ].filter((image) => image.url);
+    const handleDeleteImage = (
+        field: string,
+        url: string
+    ) => {
+
+        setSelectedImage({
+            field,
+            url,
+        });
+
+        setIsDeleteModalOpen(true);
+
+    };
+    const confirmDeleteImage = async () => {
+
+        if (!selectedImage || !id) return;
+
+        try {
+
+            await dispatch(
+                user_image_delete({
+                    user_id: Number(id),
+                    image_filed: selectedImage.field,
+                })
+            ).unwrap();
+
+            dispatch(
+                user_profile({
+                    user_id: Number(id),
+                })
+            );
+
+            setSelectedImage(null);
+
+            setIsDeleteModalOpen(false);
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    };
+    const handleApproveUser = async () => {
+
+        if (!id) return;
+
+        try {
+
+            await dispatch(
+                user_approved({
+                    user_id: Number(id),
+                    is_approved: 1,
+                })
+            ).unwrap();
+
+            dispatch(
+                user_profile({
+                    user_id: Number(id),
+                })
+            );
+
+        } catch (error) {
+
+            console.error(error);
+
+        }
+
+    };
     void about;
     useEffect(() => {
 
@@ -133,6 +229,7 @@ export default function UserView() {
     }, [dispatch, id]);
     if (loading) {
         return (
+
             <div className="w-full min-h-screen bg-gray-50 px-4 sm:px-8 pt-6 pb-16 animate-pulse">
 
                 {/* Header */}
@@ -236,6 +333,15 @@ export default function UserView() {
     }
     return (
         <div className="w-full min-h-screen bg-gray-50 text-[#111827]">
+            {isDeleteModalOpen && (
+                <CategoriesDeleteModal
+                    onClose={() => {
+                        setIsDeleteModalOpen(false);
+                        setSelectedImage(null);
+                    }}
+                    onConfirm={confirmDeleteImage}
+                />
+            )}
             <div className="px-4 sm:px-8 pt-6 pb-16 space-y-6">
 
                 {/* Header */}
@@ -250,13 +356,39 @@ export default function UserView() {
                             <span>View User</span>
                         </p>
                     </div>
-                    <button
-                        onClick={() => navigate("/all-users")}
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition shadow-sm"
-                    >
-                        <ArrowLeft size={16} />
-                        Back to List
-                    </button>
+                    <div className="flex items-center gap-3">
+
+                        <button
+                            disabled={
+                                user?.approved === 1 ||
+                                approving
+                            }
+                            onClick={handleApproveUser}
+                            className={`px-5 py-2.5 rounded-[10px] text-sm font-semibold transition
+
+                                ${user?.approved === 1
+                                    ? "bg-green-100 text-green-700 cursor-not-allowed"
+                                    : "bg-emerald-600 text-white hover:bg-emerald-700"
+                                }`}
+                        >
+                            {
+                                approving
+                                    ? "Approving..."
+                                    : user?.approved === 1
+                                        ? "Approved"
+                                        : "Approve"
+                            }
+                        </button>
+
+                        <button
+                            onClick={() => navigate("/all-users")}
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-[10px] bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] transition shadow-sm"
+                        >
+                            <ArrowLeft size={16} />
+                            Back
+                        </button>
+
+                    </div>
                 </div>
 
                 {/* Profile Hero Card */}
@@ -369,7 +501,70 @@ export default function UserView() {
                         </div>
                     </div>
                 </div>
+                <Section
+                    title="Profile Images"
+                    accent="border-l-cyan-500"
+                    iconBg="bg-cyan-50"
+                    sectionIcon={
+                        <Image
+                            size={16}
+                            className="text-cyan-600"
+                        />
+                    }
+                >
+                    <div className="col-span-full">
+                        {
+                            profileImages.length === 0 ? (
+                                <div className="text-gray-400">
+                                    No images available
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
+                                    {
+                                        profileImages.map((image, index) => (
+                                            <div
+                                                key={index}
+                                                className="relative group rounded-xl overflow-hidden border border-gray-200 bg-gray-100 aspect-[3/4]"
+                                            >
+                                                <img
+                                                    src={image.url!}
+                                                    className="w-full h-full object-cover"
+                                                />
 
+                                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition flex items-center justify-center gap-2">
+
+                                                    <button
+                                                        onClick={() =>
+                                                            setPreviewImage(image.url!)
+                                                        }
+                                                        className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-blue-500 hover:text-white"
+                                                    >
+                                                        <ZoomIn size={18} />
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() =>
+                                                            handleDeleteImage(
+                                                                image.field,
+                                                                image.url!
+                                                            )
+                                                        }
+                                                        className="w-9 h-9 rounded-full bg-white flex items-center justify-center hover:bg-red-500 hover:text-white transition"
+                                                        title="Delete Image"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
+
+                                                </div>
+
+                                            </div>
+                                        ))
+                                    }
+                                </div>
+                            )
+                        }
+                    </div>
+                </Section>
                 {/* Section: Basic Info */}
                 <Section
                     title="Basic Information"
@@ -583,7 +778,29 @@ export default function UserView() {
                         value={wantDate}
                     />
                 </Section>
+                {
+                    previewImage && (
 
+                        <div
+                            className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center"
+                        >
+
+                            <button
+                                className="absolute top-5 right-5 text-white"
+                                onClick={() => setPreviewImage(null)}
+                            >
+                                <X size={28} />
+                            </button>
+
+                            <img
+                                src={previewImage}
+                                className="max-w-[90vw] max-h-[90vh] rounded-xl shadow-2xl"
+                            />
+
+                        </div>
+
+                    )
+                }
             </div>
         </div>
     );

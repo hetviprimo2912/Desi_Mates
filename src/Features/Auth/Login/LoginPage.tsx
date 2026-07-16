@@ -11,7 +11,7 @@ import LeftSection from "./LeftSection";
 import { useAppDispatch } from "../../../Hooks/hooks";
 import { useNavigate } from "react-router-dom";
 import { loginAdmin } from "../../../Store/slices/LoginSlice/loginThunk";
-
+import toast from "react-hot-toast";
 
 const LoginPage = () => {
     const [formData, setFormData] = useState({
@@ -62,9 +62,21 @@ const LoginPage = () => {
             );
 
             if (loginAdmin.fulfilled.match(response)) {
-                console.log(response.payload);
 
                 navigate("/dashboard");
+
+            } else {
+
+                setErrors({
+                    email: "Wrong email or password",
+                    password: "Wrong email or password",
+                });
+
+                toast.error(
+                    response.payload as string ||
+                    "Wrong email or password"
+                );
+
             }
         } finally {
             setLoginLoading(false);
@@ -128,12 +140,22 @@ const LoginPage = () => {
                                         type="email"
                                         placeholder="Enter your email"
                                         value={formData.email}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+
                                             setFormData({
                                                 ...formData,
                                                 email: e.target.value,
-                                            })
-                                        }
+                                            });
+
+                                            if (
+                                                errors.email === "Wrong email"
+                                            ) {
+
+                                                setErrors({});
+
+                                            }
+
+                                        }}
                                         className={`w-full pl-12 pr-4 py-3 rounded-xl border text-sm outline-none transition-all ${errors.email
                                             ? "border-red-500 bg-red-50"
                                             : "border-gray-300 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"
@@ -164,12 +186,22 @@ const LoginPage = () => {
                                         type={showPassword ? "text" : "password"}
                                         placeholder="Enter your password"
                                         value={formData.password}
-                                        onChange={(e) =>
+                                        onChange={(e) => {
+
                                             setFormData({
                                                 ...formData,
                                                 password: e.target.value,
-                                            })
-                                        }
+                                            });
+
+                                            if (
+                                                errors.password === "Wrong password"
+                                            ) {
+
+                                                setErrors({});
+
+                                            }
+
+                                        }}
                                         className={`w-full pl-12 pr-12 py-3 rounded-xl border text-sm outline-none transition-all ${errors.password
                                             ? "border-red-500 bg-red-50"
                                             : "border-gray-300 focus:border-[#2563EB] focus:ring-4 focus:ring-blue-100"

@@ -195,6 +195,8 @@ export default function AllEvent() {
                                     { label: "Price", width: "100px" },
                                     { label: "Organized By", width: "180px" },
                                     { label: "Category", width: "160px" },
+                                    { label: "Date", width: "140px" },
+                                    { label: "Time", width: "120px" },
                                     { label: "Total Event Join", width: "160px" },
                                     { label: "Action", width: "160px", className: "text-center" },
                                 ]}
@@ -228,22 +230,29 @@ export default function AllEvent() {
                                                 className="rounded-md cursor-pointer border-gray-300 text-indigo-600 h-4.5 w-4.5"
                                             />
                                         </td>
-                                        <td className="pl-18 px-4 py-5 whitespace-nowrap">
+                                        <td className="pl-10 px-4 py-5 whitespace-nowrap">
                                             <img src={event.image} alt={event.name} className="w-12 h-12 rounded-lg object-cover border border-gray-200" />
                                         </td>
-                                        <td className="pl-32 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[15px] font-medium text-[#111827]">{event.name}</p>
+                                        <td className="pl-18 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[15px] font-medium text-[#111827]">{event.name || "N/A"}</p>
+                                        </td>
+                                        <td className="pl-12 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[14px] text-gray-700">{event.price || "N/A"}</p>
+                                        </td>
+                                        <td className="pl-16 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[14px] text-gray-600">{event.organized_by || "N/A"}</p>
                                         </td>
                                         <td className="pl-14 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] text-gray-700">{event.price}</p>
+                                            <p className="text-[14px] text-gray-600">{event.cat_id || "N/A"}</p>
+                                          
                                         </td>
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] text-gray-600">{event.organized_by}</p>
+                                        <td className="pl-10 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[14px] text-gray-600">{event.date || "N/A"}</p>
                                         </td>
-                                        <td className="pl-20 px-4 py-5 whitespace-nowrap">
-                                            <p className="text-[14px] text-gray-600">{event.cat_id}</p>
+                                        <td className="pl-14 px-4 py-5 whitespace-nowrap">
+                                            <p className="text-[14px] text-gray-600">{event.time || "N/A"}</p>
                                         </td>
-                                        <td className="pl-24 px-4 py-5 whitespace-nowrap">
+                                        <td className="pl-18 px-4 py-5 whitespace-nowrap">
                                             <p className="text-[14px] font-medium text-[#111827]">{event.count}</p>
                                         </td>
                                         <td className="px-4 py-5 text-center whitespace-nowrap">
@@ -262,7 +271,7 @@ export default function AllEvent() {
                                     ))}
                                     {!loading && events.length === 0 && (
                                         <tr>
-                                            <td colSpan={8} className="py-10 text-center text-gray-400 italic">
+                                            <td colSpan={10} className="py-10 text-center text-gray-400 italic">
                                                 No events found.
                                             </td>
                                         </tr>

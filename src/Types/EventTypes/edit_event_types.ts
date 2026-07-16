@@ -7,8 +7,8 @@ export interface EditEventPayload {
     cat_name: string;
     is_status: number;
     image: File | null;
-    date?: string;
-    time?: string;
+    date: string;
+    time: string;
 }
 
 export interface EditEventData {

@@ -1,6 +1,6 @@
 import { createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "../../../lib/axiosConfiguration";
-import type{
+import type {
   LoginPayload,
   LoginResponse,
 } from "../../../Types/LoginTypes/loginTypes";
@@ -20,7 +20,11 @@ export const loginAdmin = createAsyncThunk<
 
       return response.data;
     } catch (error: any) {
-      const message = error.response?.data?.message;
+      const responseData = error.response?.data;
+
+      const message =
+        responseData?.message ??
+        responseData?.error;
 
       if (typeof message === "string") {
         return rejectWithValue(message);

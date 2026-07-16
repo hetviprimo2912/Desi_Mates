@@ -31,6 +31,8 @@ export default function EventForm() {
     const [categoryId, setCategoryId] = useState("");
     const [categoryName, setCategoryName] = useState("");
     const [description, setDescription] = useState("");
+    const [eventDate, setEventDate] = useState("");
+    const [eventTime, setEventTime] = useState("");
     const [status, setStatus] = useState(true);
     const [selectedImage, setSelectedImage] = useState<File | null>(null);
     const [preview, setPreview] = useState("");
@@ -51,6 +53,8 @@ export default function EventForm() {
             setCategoryId("");
             setCategoryName("");
             setDescription("");
+            setEventDate("");
+            setEventTime("");
             setStatus(true);
             setSelectedImage(null);
             setPreview("");
@@ -100,6 +104,9 @@ export default function EventForm() {
         setCategoryName(
             event.cat_id || ""
         );
+
+        setEventDate(event.date || "");
+        setEventTime(event.time || "");
         const selectedCategory = categories.find((item) => {
             console.log(
                 "Comparing:",
@@ -162,7 +169,9 @@ export default function EventForm() {
                         organized_by: organizedBy,
                         cat_name: categoryName,
                         is_status: status ? 1 : 0,
-                        image: selectedImage ?? undefined,
+                        image: selectedImage ?? null,
+                        date: eventDate,
+                        time: eventTime,
                     })
                 ).unwrap();
             } else {
@@ -175,6 +184,8 @@ export default function EventForm() {
                         organized_by: organizedBy,
                         cat_name: categoryName,
                         status: status ? 1 : 0,
+                        date: eventDate,
+                        time: eventTime,
                     })
                 ).unwrap();
             }
@@ -317,7 +328,35 @@ export default function EventForm() {
                         />
                     </div>
 
-                    {/* Row 3: Event Image + Status */}
+                    {/* Row 3: Date + Time */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label className="block mb-2 text-[14px] font-semibold text-gray-700">
+                                Event Date <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="date"
+                                disabled={saving}
+                                value={eventDate}
+                                onChange={e => setEventDate(e.target.value)}
+                                className="w-full h-11 rounded-[10px] border border-gray-300 px-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100"
+                            />
+                        </div>
+                        <div>
+                            <label className="block mb-2 text-[14px] font-semibold text-gray-700">
+                                Event Time <span className="text-red-500">*</span>
+                            </label>
+                            <input
+                                type="time"
+                                disabled={saving}
+                                value={eventTime}
+                                onChange={e => setEventTime(e.target.value)}
+                                className="w-full h-11 rounded-[10px] border border-gray-300 px-4 text-sm outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-100"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Row 4: Event Image + Status */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label className="block mb-2 text-[14px] font-semibold text-gray-700">

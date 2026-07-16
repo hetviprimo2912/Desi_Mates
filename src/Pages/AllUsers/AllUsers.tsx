@@ -700,24 +700,36 @@ export default function AllUsers() {
 
                                             <td className="px-4 py-5 whitespace-nowrap">
 
-                                                <div
-                                                    className="
-                                                            w-11
-                                                            h-11
-                                                            rounded-full
-                                                            bg-blue-100
-                                                            text-blue-700
-                                                            flex
-                                                            items-center
-                                                            justify-center
-                                                            font-semibold
-                                                            text-sm
-                                                            border
-                                                            border-gray-200
-                                                        "
-                                                >
-                                                    {getInitials(user.name)}
-                                                </div>
+                                                {user.profile_pic ? (
+
+                                                    <img
+                                                        src={user.profile_pic}
+                                                        alt={user.name}
+                                                        className="w-11 h-11 rounded-full object-cover border border-gray-200"
+                                                    />
+
+                                                ) : (
+
+                                                    <div
+                                                        className="
+                                                                    w-11
+                                                                    h-11
+                                                                    rounded-full
+                                                                    bg-blue-100
+                                                                    text-blue-700
+                                                                    flex
+                                                                    items-center
+                                                                    justify-center
+                                                                    font-semibold
+                                                                    text-sm
+                                                                    border
+                                                                    border-gray-200
+                                                                "
+                                                    >
+                                                        {getInitials(user.name)}
+                                                    </div>
+
+                                                )}
 
                                             </td>
 
